@@ -14,9 +14,12 @@ dependencies:
       required: false
 
 permissions:
-  dennyy.essentials.alias.all:
+  dennyy.essentials.alias.show:
     description: allows the player to use all alias commands
-    default: false
+    default: true
   dennyy.essentials.command.alias:
     description: allows the player to use the /alias command
+    default: false
+  dennyy.essentials.command.lightning:
+    description: allows player to use the lightning command
     default: false
