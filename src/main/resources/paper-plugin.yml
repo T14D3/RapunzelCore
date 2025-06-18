@@ -1,0 +1,22 @@
+name: byDennyysEssentials
+version: '1.0'
+main: de.bydennyy.byDennyysEssentials.Main
+bootstrapper: de.bydennyy.byDennyysEssentials.Bootstrapper
+api-version: '1.21'
+
+dependencies:
+  server:
+    LuckPerms:
+      load: BEFORE
+      required: false
+    WorldEdit:
+      load: BEFORE
+      required: false
+
+permissions:
+  dennyy.essentials.alias.all:
+    description: allows the player to use all alias commands
+    default: false
+  dennyy.essentials.command.alias:
+    description: allows the player to use the /alias command
+    default: false
