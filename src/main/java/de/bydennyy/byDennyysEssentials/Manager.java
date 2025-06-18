@@ -1,11 +1,10 @@
 package de.bydennyy.byDennyysEssentials;
 
-import lombok.Getter;
+import de.bydennyy.byDennyysEssentials.listener.InventoryListener;
 import org.bukkit.plugin.Plugin;
 
 public class Manager {
 
-    @Getter
     private final Plugin plugin;
 
     public Manager(Plugin plugin) {
@@ -17,7 +16,7 @@ public class Manager {
     }
 
     public void registerListener() {
-
+        plugin.getServer().getPluginManager().registerEvents(new InventoryListener(plugin), plugin);
     }
 
 }

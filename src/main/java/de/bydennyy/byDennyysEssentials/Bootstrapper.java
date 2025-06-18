@@ -1,6 +1,7 @@
 package de.bydennyy.byDennyysEssentials;
 
 import de.bydennyy.byDennyysEssentials.alias.SimpleAlias;
+import de.bydennyy.byDennyysEssentials.command.EnderChestSeeCommand;
 import de.bydennyy.byDennyysEssentials.command.LightningCommand;
 import io.papermc.paper.plugin.bootstrap.BootstrapContext;
 import io.papermc.paper.plugin.bootstrap.PluginBootstrap;
@@ -24,6 +25,7 @@ public class Bootstrapper implements PluginBootstrap {
             commands.registrar().register(SimpleAlias.createCommand("tpall", "tp @a ~ ~ ~", "minecraft.command.teleport"));
 
             commands.registrar().register(LightningCommand.createCommand());
+            commands.registrar().register(EnderChestSeeCommand.createCommand());
         });
     }
 

@@ -20,6 +20,7 @@ public class Main extends JavaPlugin {
     public void onEnable() {
         manager = new Manager(this);
         manager.initialize();
+
         RegisteredServiceProvider<LuckPerms> provider = Bukkit.getServicesManager().getRegistration(LuckPerms.class);
         if (provider != null) {
             luckPerms = provider.getProvider();

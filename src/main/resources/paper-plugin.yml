@@ -23,3 +23,15 @@ permissions:
   dennyy.essentials.command.lightning:
     description: allows player to use the lightning command
     default: false
+  dennyy.essentials.command.ec:
+    description: allows player to use the lightning command
+    default: false
+    children:
+      dennyy.essentials.command.ec.self: true
+  dennyy.essentials.command.ec.self:
+    description: allows player to use the lightning command
+    default: false
+  dennyy.essentials.command.ec.edit:
+    description: allows player to use the lightning command
+    default: false
+
