@@ -14,18 +14,16 @@ public class BroadcastCommand {
     public BroadcastCommand() {
         new CommandAPICommand("broadcast")
                 .withAliases("bc")
-                .withArguments(new GreedyStringArgument("message")
-                        .withPermission("core.broadcast")
-                        .executes((executor, args) -> {
-                            String message = (String) args.get("message");
-                            Component broadcastMessage = Main.getInstance().getMessage("commands.broadcast.format",
-                                    executor.getName(), message);
-                            Bukkit.broadcast(broadcastMessage);
-                            return Command.SINGLE_SUCCESS;
-                        })
-                )
+                .withArguments(new GreedyStringArgument("message"))
                 .withFullDescription("Broadcasts a message to all online players.")
                 .withPermission("core.broadcast")
+                .executes((executor, args) -> {
+                    String message = (String) args.get("message");
+                    Component broadcastMessage = Main.getInstance().getMessage("commands.broadcast.format",
+                            message, executor.getName());
+                    Bukkit.broadcast(broadcastMessage);
+                    return Command.SINGLE_SUCCESS;
+                })
                 .register(Main.getInstance());
     }
 }
