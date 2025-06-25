@@ -3,28 +3,27 @@ package de.t14d3.core;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.*;
 
 import static net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.parsed;
 
 public class MessageHandler {
-    private final Main plugin;
-    private Map<String, String> messages = new HashMap<>();
+    private final Map<String, String> messages = new HashMap<>();
     private final MiniMessage mm = MiniMessage.miniMessage();
 
     public MessageHandler(Main plugin) {
-        this.plugin = plugin;
-        FileConfiguration messagesConfig = new YamlConfiguration();
+        File messagesFile = new File(plugin.getDataFolder(), "messages.properties");
+        Properties messagesConfig = new Properties();
         try {
-            messagesConfig.load(plugin.getDataFolder().toPath().resolve("messages.yml").toFile());
+            messagesConfig.load(new FileInputStream(messagesFile));
         } catch (Exception e) {
-            plugin.getLogger().warning("Failed to load messages.yml");
+            plugin.getLogger().warning("Failed to load messages.properties: " + e.getMessage());
         }
-        messagesConfig.getKeys(false).forEach(key -> {
-            messages.put(key, messagesConfig.getString(key));
+        messagesConfig.keySet().forEach(key -> {
+            messages.put(key.toString(), messagesConfig.getProperty(key.toString()));
         });
     }
 
