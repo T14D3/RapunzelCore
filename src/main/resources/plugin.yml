@@ -1,0 +1,43 @@
+name: Core
+version: '0.0.1'
+main: de.t14d3.core.Main
+api-version: '1.21'
+prefix: 'core'
+authors: [T14D3]
+permissions:
+  core.broadcast:
+    description: Allows broadcasting messages to all online players.
+    default: op
+  core.enderchest:
+    description: Allows opening the ender chest of a player.
+    default: op
+  core.fly:
+    description: Allows players to fly.
+    default: op
+  core.flyspeed:
+    description: Allows players to set their fly speed.
+    default: op
+  core.invsee:
+    description: Allows players to see the inventory of another player.
+    default: op
+  core.msg:
+    description: Allows players to send private messages to other players.
+    default: true
+  core.offlinetp:
+    description: Allows players to teleport to the last known location of another player.
+    default: op
+  core.socialspy:
+    description: Allows players to toggle social spy mode.
+    default: op
+  core.speed:
+    description: Allows players to set their movement speed.
+    default: op
+  core.teamchat:
+    description: Allows players to send team chat messages.
+    default: op
+  core.vanish:
+    description: Allows players to toggle vanish mode.
+    default: op
+  core.uinfo:
+    description: Allows players to see information about another player.
+    default: op
