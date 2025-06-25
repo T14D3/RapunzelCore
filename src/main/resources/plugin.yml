@@ -41,3 +41,18 @@ permissions:
   core.uinfo:
     description: Allows players to see information about another player.
     default: op
+  core.back:
+    description: Allows players to teleport back to their last death location.
+    default: op
+  core.craft:
+    description: Allows players to open a crafting inventory.
+    default: op
+  core.delhome:
+    description: Allows players to delete their set home location.
+    default: true
+  core.home:
+    description: Allows players to teleport to their set home location.
+    default: true
+  core.spawn:
+    description: Allows players to teleport to the server's spawn location.
+    default: true
