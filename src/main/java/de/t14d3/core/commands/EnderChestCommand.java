@@ -20,28 +20,20 @@ public class EnderChestCommand {
                             });
                             return builder.buildFuture();
                         })
-                        .executes((executor, args) -> {
-                            Player sender = (Player) executor;
-                            Player player = (Player) args.get("player");
-                            if (player == null) {
-                                sender.sendMessage(Main.getInstance().getMessage("commands.enderchest.error.invalid", args.getRaw("player")));
-                                return Command.SINGLE_SUCCESS;
-                            }
-                            if (sender.getOpenInventory().getTopInventory().getType() != InventoryType.PLAYER) {
-                                sender.closeInventory();
-                            }
-                            sender.openInventory(player.getEnderChest());
-                            return Command.SINGLE_SUCCESS;
-                        })
                 )
                 .withFullDescription("Opens an ender chest for the given player.")
                 .withPermission("core.enderchest")
                 .executes((executor, args) -> {
                     Player sender = (Player) executor;
+                    Player player = (Player) args.get("player");
+                    if (player == null) {
+                        sender.sendMessage(Main.getInstance().getMessage("commands.enderchest.error.invalid", args.getRaw("player")));
+                        return Command.SINGLE_SUCCESS;
+                    }
                     if (sender.getOpenInventory().getTopInventory().getType() != InventoryType.PLAYER) {
                         sender.closeInventory();
                     }
-                    sender.openInventory(sender.getEnderChest());
+                    sender.openInventory(player.getEnderChest());
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(Main.getInstance());

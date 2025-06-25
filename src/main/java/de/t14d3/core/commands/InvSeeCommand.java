@@ -36,6 +36,19 @@ public class InvSeeCommand {
                 )
                 .withFullDescription("Opens the inventory of the given player.")
                 .withPermission("core.invsee")
+                .executes((executor, args) -> {
+                    Player sender = (Player) executor;
+                    Player target = (Player) args.get("player");
+                    if (target == null) {
+                        sender.sendMessage(Main.getInstance().getMessage("commands.invsee.error.invalid", args.getRaw("player")));
+                        return Command.SINGLE_SUCCESS;
+                    }
+                    if (sender.getOpenInventory().getTopInventory().getType() != InventoryType.PLAYER) {
+                        sender.closeInventory();
+                    }
+                    sender.openInventory(target.getInventory());
+                    return Command.SINGLE_SUCCESS;
+                })
                 .register(Main.getInstance());
     }
 }

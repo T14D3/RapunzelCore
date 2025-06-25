@@ -19,7 +19,7 @@ public class FlySpeedCommand {
                 )
                 .withOptionalArguments(
                         new EntitySelectorArgument.OnePlayer("player")
-                                .withPermission("core.flyspeed")
+                                .withPermission("core.flyspeed.others")
                                 .replaceSuggestions((sender, builder) -> {
                                     Bukkit.getOnlinePlayers().forEach(player -> {
                                         builder.suggest(player.getName());

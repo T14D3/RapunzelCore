@@ -21,21 +21,21 @@ public class TeamChatCommand {
                 .withPermission("core.teamchat.use")
                 .withArguments(new StringArgument("message")
                         .withPermission("core.teamchat")
-                        .executes((executor, args) -> {
-                            Player sender = (Player) executor;
-                            String raw = (String) args.get("message");
-                            Set<Player> recipients = Bukkit.getOnlinePlayers().stream()
-                                    .filter(player -> player.hasPermission("core.teamchat.see"))
-                                    .collect(Collectors.toSet());
-                            Component message = Main.getInstance().getMessage("commands.teamchat.format.sender",
-                                    sender.getName(), raw);
-                            recipients.forEach(player -> {
-                                player.sendMessage(message);
-                            });
-
-                            return Command.SINGLE_SUCCESS;
-                        })
                 )
+                .executes((executor, args) -> {
+                    Player sender = (Player) executor;
+                    String raw = (String) args.get("message");
+                    Set<Player> recipients = Bukkit.getOnlinePlayers().stream()
+                            .filter(player -> player.hasPermission("core.teamchat.see"))
+                            .collect(Collectors.toSet());
+                    Component message = Main.getInstance().getMessage("commands.teamchat.format.sender",
+                            sender.getName(), raw);
+                    recipients.forEach(player -> {
+                        player.sendMessage(message);
+                    });
+
+                    return Command.SINGLE_SUCCESS;
+                })
                 .withFullDescription("Sends a message to your team members.")
                 .register(Main.getInstance());
     }

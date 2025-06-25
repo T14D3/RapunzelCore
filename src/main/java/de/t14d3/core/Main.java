@@ -15,6 +15,8 @@ public final class Main extends JavaPlugin {
     @Override
     public void onEnable() {
         CommandAPI.onEnable();
+        messages = new MessageHandler(this);
+        new CommandManager(this);
 
         if (!getDataFolder().exists()) {
             getDataFolder().mkdir();
@@ -28,10 +30,6 @@ public final class Main extends JavaPlugin {
                 getLogger().severe("Failed to copy default messages.properties: " + e.getMessage());
             }
         }
-
-
-        messages = new MessageHandler(this);
-        instance = this;
     }
 
     @Override
@@ -41,8 +39,7 @@ public final class Main extends JavaPlugin {
                 .skipReloadDatapacks(true)
                 .silentLogs(true)
         );
-
-        new CommandManager(this);
+        instance = this;
     }
 
     @Override

@@ -29,24 +29,24 @@ public class VanishCommand {
                             });
                             return builder.buildFuture();
                         })
-                        .executes((executor, args) -> {
-                            Player sender = (Player) executor;
-                            Player target = (Player) args.get("player");
-                            if (target == null) {
-                                sender.sendMessage(Main.getInstance().getMessage("commands.vanish.error.invalid", args.getRaw("player")));
-                                return Command.SINGLE_SUCCESS;
-                            }
-                            boolean vanished = vanishedPlayers.getOrDefault(target, false);
-                            vanishedPlayers.put(target, !vanished);
-                            Component message = Main.getInstance().getMessage("commands.vanish.toggle",
-                                            target.getName(), !vanished ? "enabled" : "disabled")
-                                    .color(vanished ? NamedTextColor.RED : NamedTextColor.GREEN);
-                            sender.sendMessage(message);
-                            return Command.SINGLE_SUCCESS;
-                        })
                 )
                 .withFullDescription("Toggles vanish mode for the given player.")
                 .withPermission("core.vanish")
+                .executes((executor, args) -> {
+                    Player sender = (Player) executor;
+                    Player target = (Player) args.get("player") == null ? (Player) args.get("player") : sender;
+                    if (target == null) {
+                        sender.sendMessage(Main.getInstance().getMessage("commands.vanish.error.invalid", args.getRaw("player")));
+                        return Command.SINGLE_SUCCESS;
+                    }
+                    boolean vanished = vanishedPlayers.getOrDefault(target, false);
+                    vanishedPlayers.put(target, !vanished);
+                    Component message = Main.getInstance().getMessage("commands.vanish.toggle",
+                                    target.getName(), !vanished ? "enabled" : "disabled")
+                            .color(vanished ? NamedTextColor.RED : NamedTextColor.GREEN);
+                    sender.sendMessage(message);
+                    return Command.SINGLE_SUCCESS;
+                })
                 .register(Main.getInstance());
     }
 }
