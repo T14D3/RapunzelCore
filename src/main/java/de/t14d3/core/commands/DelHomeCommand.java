@@ -9,21 +9,19 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 public class DelHomeCommand {
-    private final HomeCommand homeCommand;
 
     public DelHomeCommand(Main plugin) {
-        this.homeCommand = new HomeCommand(plugin);
         new CommandAPICommand("delhome")
                 .withFullDescription("Deletes the player's set home location.")
                 .withPermission("core.delhome")
                 .executes((executor, args) -> {
                     Player player = (Player) executor;
-                    Location homeLocation = homeCommand.getHomeLocation(player);
+                    Location homeLocation = plugin.getCommandManager().getHomeLocation(player);
                     if (homeLocation == null) {
                         player.sendMessage(Main.getInstance().getMessage("commands.delhome.error.no_home"));
                         return Command.SINGLE_SUCCESS;
                     }
-                    homeCommand.setHomeLocation(player, null);
+                    plugin.getCommandManager().setHomeLocation(player, null);
                     player.sendMessage(Main.getInstance().getMessage("commands.delhome.success"));
                     return Command.SINGLE_SUCCESS;
                 })

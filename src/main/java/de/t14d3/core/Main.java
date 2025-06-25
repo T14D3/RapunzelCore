@@ -11,12 +11,13 @@ import java.nio.file.Files;
 public final class Main extends JavaPlugin {
     private MessageHandler messages;
     private static Main instance;
+    private CommandManager commandManager;
 
     @Override
     public void onEnable() {
         CommandAPI.onEnable();
         messages = new MessageHandler(this);
-        new CommandManager(this);
+        commandManager = new CommandManager(this);
 
         if (!getDataFolder().exists()) {
             getDataFolder().mkdir();
@@ -61,6 +62,10 @@ public final class Main extends JavaPlugin {
 
     public static Main getInstance() {
         return instance;
+    }
+
+    public CommandManager getCommandManager() {
+        return commandManager;
     }
 
 
