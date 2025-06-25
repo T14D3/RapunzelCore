@@ -1,12 +1,12 @@
 package de.t14d3.core;
 
+import dev.jorel.commandapi.CommandAPI;
+import dev.jorel.commandapi.CommandAPIBukkitConfig;
 import net.kyori.adventure.text.Component;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
 
 public final class Main extends JavaPlugin {
     private MessageHandler messages;
@@ -14,20 +14,33 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        CommandAPI.onEnable();
+
         if (!getDataFolder().exists()) {
             getDataFolder().mkdir();
         }
-        if (Files.notExists(getDataFolder().toPath().resolve("messages.yml"))) {
+        File messagesFile = new File(getDataFolder(), "messages.properties");
+        if (!messagesFile.exists()) {
             try {
-                Files.copy(getClass().getResourceAsStream("messages.yml"), getDataFolder().toPath().resolve("messages.yml"));
+                //noinspection DataFlowIssue // File is always included in jar
+                Files.copy(getClass().getResourceAsStream("/messages.properties"), messagesFile.toPath());
             } catch (Exception e) {
-                getLogger().severe("Failed to copy default messages.yml: " + e.getMessage());
+                getLogger().severe("Failed to copy default messages.properties: " + e.getMessage());
             }
         }
 
 
         messages = new MessageHandler(this);
         instance = this;
+    }
+
+    @Override
+    public void onLoad() {
+        CommandAPI.onLoad(new CommandAPIBukkitConfig(this)
+                .verboseOutput(false)
+                .skipReloadDatapacks(true)
+                .silentLogs(true)
+        );
 
         new CommandManager(this);
     }
