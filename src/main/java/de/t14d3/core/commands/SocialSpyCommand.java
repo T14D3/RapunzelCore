@@ -46,6 +46,7 @@ public class SocialSpyCommand {
                         })
                 )
                 .withFullDescription("Toggles social spy mode for the given player.")
-                .withPermission("core.socialspy");
+                .withPermission("core.socialspy")
+                .register(Main.getInstance());
     }
 }

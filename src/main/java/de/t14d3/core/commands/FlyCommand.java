@@ -53,6 +53,7 @@ public class FlyCommand {
                                     player.getName(), !enabled ? "enabled" : "disabled");
                     player.sendMessage(message);
                     return Command.SINGLE_SUCCESS;
-                });
+                })
+                .register(Main.getInstance());
     }
 }

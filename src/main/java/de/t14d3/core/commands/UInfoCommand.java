@@ -48,6 +48,7 @@ public class UInfoCommand {
                     }
 
                 })
-                .withFullDescription("Shows information about a player.");
+                .withFullDescription("Shows information about a player.")
+                .register(Main.getInstance());
     }
 }

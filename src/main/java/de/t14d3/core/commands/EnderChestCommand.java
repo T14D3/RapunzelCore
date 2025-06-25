@@ -43,6 +43,7 @@ public class EnderChestCommand {
                     }
                     sender.openInventory(sender.getEnderChest());
                     return Command.SINGLE_SUCCESS;
-                });
+                })
+                .register(Main.getInstance());
     }
 }

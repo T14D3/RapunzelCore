@@ -44,6 +44,7 @@ public class SpeedCommand {
 
                     return Command.SINGLE_SUCCESS;
                 })
-                .withFullDescription("Sets the movement speed for the given player.");
+                .withFullDescription("Sets the movement speed for the given player.")
+                .register(Main.getInstance());
     }
 }

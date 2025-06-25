@@ -46,6 +46,7 @@ public class VanishCommand {
                         })
                 )
                 .withFullDescription("Toggles vanish mode for the given player.")
-                .withPermission("core.vanish");
+                .withPermission("core.vanish")
+                .register(Main.getInstance());
     }
 }
