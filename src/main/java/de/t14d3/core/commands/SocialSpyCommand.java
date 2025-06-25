@@ -26,27 +26,27 @@ public class SocialSpyCommand {
                             });
                             return builder.buildFuture();
                         })
-                        .executes((executor, args) -> {
-                            Player sender = (Player) executor;
-                            Player target = (Player) args.get("player");
-                            if (target == null) {
-                                sender.sendMessage(Main.getInstance().getMessage("commands.socialspy.error.invalid", args.getRaw("player")));
-                                return Command.SINGLE_SUCCESS;
-                            }
-                            boolean enabled = sender.hasMetadata("socialspy");
-                            if (enabled) {
-                                sender.removeMetadata("socialspy", Main.getInstance());
-                            } else {
-                                sender.setMetadata("socialspy", new FixedMetadataValue(Main.getInstance(), true));
-                            }
-                            Component message = Main.getInstance().getMessage("commands.socialspy.toggle",
-                                            target.getName(), !enabled ? "enabled" : "disabled");
-                            sender.sendMessage(message);
-                            return Command.SINGLE_SUCCESS;
-                        })
                 )
                 .withFullDescription("Toggles social spy mode for the given player.")
                 .withPermission("core.socialspy")
+                .executes((executor, args) -> {
+                    Player sender = (Player) executor;
+                    Player target = (Player) args.get("player") == null ? (Player) args.get("player") : sender;
+                    if (target == null) {
+                        sender.sendMessage(Main.getInstance().getMessage("commands.socialspy.error.invalid", args.getRaw("player")));
+                        return Command.SINGLE_SUCCESS;
+                    }
+                    boolean enabled = sender.hasMetadata("socialspy");
+                    if (enabled) {
+                        sender.removeMetadata("socialspy", Main.getInstance());
+                    } else {
+                        sender.setMetadata("socialspy", new FixedMetadataValue(Main.getInstance(), true));
+                    }
+                    Component message = Main.getInstance().getMessage("commands.socialspy.toggle",
+                            target.getName(), !enabled ? "enabled" : "disabled");
+                    sender.sendMessage(message);
+                    return Command.SINGLE_SUCCESS;
+                })
                 .register(Main.getInstance());
     }
 }

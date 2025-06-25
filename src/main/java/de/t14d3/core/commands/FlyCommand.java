@@ -20,38 +20,29 @@ public class FlyCommand {
                             });
                             return builder.buildFuture();
                         })
-                        .executes((executor, args) -> {
-                            Player sender = (Player) executor;
-                            Player target = (Player) args.get("player");
-                            if (target == null) {
-                                sender.sendMessage(Main.getInstance().getMessage("commands.fly.error.invalid", args.getRaw("player")));
-                                return Command.SINGLE_SUCCESS;
-                            }
-                            boolean enabled = target.getAllowFlight();
-                            if (enabled) {
-                                target.setFlying(false);
-                            } else {
-                                //noinspection deprecation
-                                if (target.isOnGround()) {
-                                    target.setFlying(true);
-                                }
-                            }
-                            target.setAllowFlight(!enabled);
-                            Component message = Main.getInstance().getMessage("commands.fly.toggle",
-                                            target.getName(), !enabled ? "enabled" : "disabled");
-                            sender.sendMessage(message);
-                            return Command.SINGLE_SUCCESS;
-                        })
                 )
                 .withFullDescription("Toggles flight mode for the given player.")
                 .withPermission("core.fly")
                 .executes((executor, args) -> {
-                    Player player = (Player) executor;
-                    boolean enabled = player.getAllowFlight();
-                    player.setAllowFlight(!enabled);
+                    Player sender = (Player) executor;
+                    Player target = args.get("player") == null ? (Player) args.get("player") : sender;
+                    if (target == null) {
+                        sender.sendMessage(Main.getInstance().getMessage("commands.fly.error.invalid", args.getRaw("player")));
+                        return Command.SINGLE_SUCCESS;
+                    }
+                    boolean enabled = target.getAllowFlight();
+                    if (enabled) {
+                        target.setFlying(false);
+                    } else {
+                        //noinspection deprecation
+                        if (target.isOnGround()) {
+                            target.setFlying(true);
+                        }
+                    }
+                    target.setAllowFlight(!enabled);
                     Component message = Main.getInstance().getMessage("commands.fly.toggle",
-                                    player.getName(), !enabled ? "enabled" : "disabled");
-                    player.sendMessage(message);
+                            target.getName(), !enabled ? "enabled" : "disabled");
+                    sender.sendMessage(message);
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(Main.getInstance());

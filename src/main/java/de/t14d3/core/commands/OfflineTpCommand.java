@@ -23,26 +23,26 @@ public class OfflineTpCommand {
                             }
                             return builder.buildFuture();
                         })
-                        .executes((executor, args) -> {
-                            Player sender = (Player) executor;
-                            OfflinePlayer target = Bukkit.getOfflinePlayerIfCached((String) args.get("player"));
-                            if (target == null) {
-                                sender.sendMessage(Main.getInstance().getMessage("commands.offlinetp.error.invalid", args.getRaw("player")));
-                                return Command.SINGLE_SUCCESS;
-                            }
-                            Location location = target.getLocation();
-                            if (location == null) {
-                                sender.sendMessage(Main.getInstance().getMessage("commands.offlinetp.error.no_location"));
-                                return Command.SINGLE_SUCCESS;
-                            }
-                            sender.teleport(location);
-                            Component message = Main.getInstance().getMessage("commands.offlinetp.success",
-                                            target.getName())
-                                    .color(NamedTextColor.GREEN);
-                            sender.sendMessage(message);
-                            return Command.SINGLE_SUCCESS;
-                        })
                 )
+                .executes((executor, args) -> {
+                    Player sender = (Player) executor;
+                    OfflinePlayer target = Bukkit.getOfflinePlayerIfCached((String) args.get("player"));
+                    if (target == null) {
+                        sender.sendMessage(Main.getInstance().getMessage("commands.offlinetp.error.invalid", args.getRaw("player")));
+                        return Command.SINGLE_SUCCESS;
+                    }
+                    Location location = target.getLocation();
+                    if (location == null) {
+                        sender.sendMessage(Main.getInstance().getMessage("commands.offlinetp.error.no_location"));
+                        return Command.SINGLE_SUCCESS;
+                    }
+                    sender.teleport(location);
+                    Component message = Main.getInstance().getMessage("commands.offlinetp.success",
+                                    target.getName())
+                            .color(NamedTextColor.GREEN);
+                    sender.sendMessage(message);
+                    return Command.SINGLE_SUCCESS;
+                })
                 .withFullDescription("Teleports the player to the last known location of the given offline player.")
                 .register(Main.getInstance());
     }
