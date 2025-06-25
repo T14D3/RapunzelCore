@@ -36,6 +36,7 @@ public class TeamChatCommand {
                             return Command.SINGLE_SUCCESS;
                         })
                 )
-                .withFullDescription("Sends a message to your team members.");
+                .withFullDescription("Sends a message to your team members.")
+                .register(Main.getInstance());
     }
 }

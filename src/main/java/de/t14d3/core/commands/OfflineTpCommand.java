@@ -43,6 +43,7 @@ public class OfflineTpCommand {
                             return Command.SINGLE_SUCCESS;
                         })
                 )
-                .withFullDescription("Teleports the player to the last known location of the given offline player.");
+                .withFullDescription("Teleports the player to the last known location of the given offline player.")
+                .register(Main.getInstance());
     }
 }

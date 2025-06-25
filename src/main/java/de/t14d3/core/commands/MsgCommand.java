@@ -41,6 +41,7 @@ public class MsgCommand {
 
                     return Command.SINGLE_SUCCESS;
                 })
-                .withFullDescription("Sends a private message to the given player.");
+                .withFullDescription("Sends a private message to the given player.")
+                .register(Main.getInstance());
     }
 }

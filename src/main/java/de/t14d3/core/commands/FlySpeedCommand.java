@@ -45,6 +45,7 @@ public class FlySpeedCommand {
 
                     return Command.SINGLE_SUCCESS;
                 })
-                .withFullDescription("Sets the flight speed for the given player.");
+                .withFullDescription("Sets the flight speed for the given player.")
+                .register(Main.getInstance());
     }
 }

@@ -25,6 +25,7 @@ public class BroadcastCommand {
                         })
                 )
                 .withFullDescription("Broadcasts a message to all online players.")
-                .withPermission("core.broadcast");
+                .withPermission("core.broadcast")
+                .register(Main.getInstance());
     }
 }

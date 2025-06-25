@@ -35,6 +35,7 @@ public class InvSeeCommand {
                         })
                 )
                 .withFullDescription("Opens the inventory of the given player.")
-                .withPermission("core.invsee");
+                .withPermission("core.invsee")
+                .register(Main.getInstance());
     }
 }
