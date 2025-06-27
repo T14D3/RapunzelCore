@@ -3,20 +3,31 @@ package de.t14d3.core;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class Main extends JavaPlugin {
     private MessageHandler messages;
     private static Main instance;
     private CommandManager commandManager;
+    private Map<World, Location> spawns = new HashMap<>();
 
     @Override
     public void onEnable() {
         CommandAPI.onEnable();
         messages = new MessageHandler(this);
+
+        getServer().getWorlds().forEach(world -> {
+            spawns.put(world, getConfig().getLocation("spawn." + world.getName()));
+        });
+        spawns.put(getConfig().getLocation("spawn.global").getWorld(), getConfig().getLocation("spawn.global"));
+
         commandManager = new CommandManager(this);
 
         if (!getDataFolder().exists()) {
@@ -66,6 +77,14 @@ public final class Main extends JavaPlugin {
 
     public CommandManager getCommandManager() {
         return commandManager;
+    }
+
+    public Location getSpawn(World world) {
+        return spawns.get(world);
+    }
+
+    public void setSpawn(World world, Location location) {
+        spawns.put(world, location);
     }
 
 

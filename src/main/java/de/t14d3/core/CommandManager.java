@@ -28,7 +28,8 @@ public class CommandManager {
         new OfflineTpCommand();
         new SetHomeCommand(plugin);
         new SocialSpyCommand();
-        new SpawnCommand();
+        new SetSpawnCommand(plugin);
+        new SpawnCommand(plugin);
         new SpeedCommand();
         new TeamChatCommand();
         new UInfoCommand();

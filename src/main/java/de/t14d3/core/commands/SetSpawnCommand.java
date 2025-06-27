@@ -6,15 +6,15 @@ import dev.jorel.commandapi.CommandAPICommand;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 
-public class SpawnCommand {
-    public SpawnCommand(Main plugin) {
-        new CommandAPICommand("spawn")
-                .withFullDescription("Teleports the player to the server's spawn location.")
-                .withPermission("core.spawn")
+public class SetSpawnCommand {
+    public SetSpawnCommand(Main plugin) {
+        new CommandAPICommand("setspawn")
+                .withFullDescription("Sets the worlds spawn location.")
+                .withPermission("core.setspawn")
                 .executes((executor, args) -> {
                     Player player = (Player) executor;
-                    player.teleport(plugin.getSpawn(player.getWorld()));
-                    Component message = plugin.getMessage("commands.spawn.success");
+                    plugin.setSpawn(player.getWorld(), player.getLocation());
+                    Component message = plugin.getMessage("commands.setspawn.success");
                     player.sendMessage(message);
                     return Command.SINGLE_SUCCESS;
                 })
