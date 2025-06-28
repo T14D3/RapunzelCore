@@ -15,7 +15,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import java.util.HashMap;
 import java.util.Map;
 
-public class VanishCommand {
+public class VanishCommand implements Listener {
     private static final Map<Player, Boolean> vanishedPlayers = new HashMap<>();
 
     public VanishCommand() {
@@ -24,9 +24,7 @@ public class VanishCommand {
                 .withArguments(new EntitySelectorArgument.OnePlayer("player")
                         .withPermission("core.vanish")
                         .replaceSuggestions((sender, builder) -> {
-                            Bukkit.getOnlinePlayers().forEach(player -> {
-                                builder.suggest(player.getName());
-                            });
+                            Bukkit.getOnlinePlayers().forEach(player -> builder.suggest(player.getName()));
                             return builder.buildFuture();
                         })
                 )
@@ -34,19 +32,59 @@ public class VanishCommand {
                 .withPermission("core.vanish")
                 .executes((executor, args) -> {
                     Player sender = (Player) executor;
-                    Player target = (Player) args.get("player") == null ? (Player) args.get("player") : sender;
+                    // Determine target: if argument provided, use it; otherwise use sender
+                    Player target = args.get("player") != null ? (Player) args.get("player") : sender;
+
                     if (target == null) {
-                        sender.sendMessage(Main.getInstance().getMessage("commands.vanish.error.invalid", args.getRaw("player")));
+                        sender.sendMessage(
+                                Main.getInstance().getMessage("commands.vanish.error.invalid", args.getRaw("player"))
+                        );
                         return Command.SINGLE_SUCCESS;
                     }
-                    boolean vanished = vanishedPlayers.getOrDefault(target, false);
-                    vanishedPlayers.put(target, !vanished);
-                    Component message = Main.getInstance().getMessage("commands.vanish.toggle",
-                                    target.getName(), !vanished ? "enabled" : "disabled")
-                            .color(vanished ? NamedTextColor.RED : NamedTextColor.GREEN);
+
+                    boolean isVanished = vanishedPlayers.getOrDefault(target, false);
+                    vanishedPlayers.put(target, !isVanished);
+
+                    if (!isVanished) {
+                        // Enable vanish: hide from players without see permission
+                        for (Player viewer : Bukkit.getOnlinePlayers()) {
+                            if (!viewer.hasPermission("core.vanish.see") && !viewer.equals(target)) {
+                                viewer.hidePlayer(Main.getInstance(), target);
+                            }
+                        }
+                        Bukkit.getServer().broadcast(Main.getInstance().getMessage("commands.vanish.fakemessage.join", target.getName()));
+                    } else {
+                        // Disable vanish: show to everyone
+                        for (Player viewer : Bukkit.getOnlinePlayers()) {
+                            if (!viewer.equals(target)) {
+                                viewer.showPlayer(Main.getInstance(), target);
+                            }
+                        }
+                        Bukkit.getServer().broadcast(Main.getInstance().getMessage("commands.vanish.fakemessage.leave", target.getName()));
+                    }
+
+                    // Notify sender
+                    Component message = Main.getInstance()
+                            .getMessage("commands.vanish.toggle", target.getName(), !isVanished ? "enabled" : "disabled")
+                            .color(!isVanished ? NamedTextColor.GREEN : NamedTextColor.RED);
                     sender.sendMessage(message);
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(Main.getInstance());
+        Bukkit.getPluginManager().registerEvents(this, Main.getInstance());
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Player joiner = event.getPlayer();
+        // Hide existing vanished players from joiner if joiner lacks see permission
+        for (Map.Entry<Player, Boolean> entry : vanishedPlayers.entrySet()) {
+            Player vanished = entry.getKey();
+            boolean isVanished = entry.getValue();
+
+            if (isVanished && !joiner.hasPermission("core.vanish.see") && !joiner.equals(vanished)) {
+                joiner.hidePlayer(Main.getInstance(), vanished);
+            }
+        }
     }
 }
