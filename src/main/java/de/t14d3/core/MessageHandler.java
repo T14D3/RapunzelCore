@@ -28,14 +28,23 @@ public class MessageHandler {
     }
 
     public Component getMessage(String key) {
+        if (messages.get(key) == null) {
+            return Component.text("No message found for key: " + key);
+        }
         return mm.deserialize(messages.get(key));
     }
 
 
     public Component getMessage(String key, String arg1) {
+        if (messages.get(key) == null) {
+            return Component.text("No message found for key: " + key);
+        }
         return mm.deserialize(messages.get(key), parsed("arg1", arg1));
     }
     public Component getMessage(String key, String... args) {
+        if (messages.get(key) == null) {
+            return Component.text("No message found for key: " + key);
+        }
         TagResolver[] resolvers = new TagResolver[args.length];
         for (int i = 0; i < args.length; i++) {
             resolvers[i] = parsed("arg" + (i + 1), args[i]);

@@ -1,4 +1,4 @@
-name: Core
+name: byDennyyEssentials
 version: '0.0.1'
 main: de.t14d3.core.Main
 api-version: '1.21'
@@ -19,6 +19,9 @@ permissions:
     default: op
   core.invsee:
     description: Allows players to see the inventory of another player.
+    default: op
+  core.invsee.modify:
+    description: Allows players to modify the inventory of another player.
     default: op
   core.msg:
     description: Allows players to send private messages to other players.

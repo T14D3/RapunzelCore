@@ -1,5 +1,7 @@
 package de.t14d3.core;
 
+import de.t14d3.core.listeners.ChatListener;
+import de.t14d3.core.listeners.InvSeeListener;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
 import net.kyori.adventure.text.Component;
@@ -16,19 +18,23 @@ public final class Main extends JavaPlugin {
     private MessageHandler messages;
     private static Main instance;
     private CommandManager commandManager;
-    private Map<World, Location> spawns = new HashMap<>();
+    private Map<String, Location> spawns = new HashMap<>();
 
     @Override
     public void onEnable() {
         CommandAPI.onEnable();
         messages = new MessageHandler(this);
+        saveDefaultConfig();
 
         getServer().getWorlds().forEach(world -> {
-            spawns.put(world, getConfig().getLocation("spawn." + world.getName()));
+            spawns.put(world.getName(), getConfig().getLocation("spawn." + world.getName()));
         });
-        spawns.put(getConfig().getLocation("spawn.global").getWorld(), getConfig().getLocation("spawn.global"));
+        spawns.put("global", getConfig().getLocation("spawn.global", getServer().getWorlds().get(0).getSpawnLocation()));
 
         commandManager = new CommandManager(this);
+
+        getServer().getPluginManager().registerEvents(new InvSeeListener(), this);
+        getServer().getPluginManager().registerEvents(new ChatListener(this), this);
 
         if (!getDataFolder().exists()) {
             getDataFolder().mkdir();
@@ -57,6 +63,8 @@ public final class Main extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+        spawns.forEach((world, location) -> getConfig().set("spawn." + world, location));
+        saveConfig();
     }
 
     public MessageHandler getMessages() {
@@ -80,11 +88,11 @@ public final class Main extends JavaPlugin {
     }
 
     public Location getSpawn(World world) {
-        return spawns.get(world);
+        return spawns.get(world.getName()) == null ? spawns.get("global") : spawns.get(world.getName());
     }
 
     public void setSpawn(World world, Location location) {
-        spawns.put(world, location);
+        spawns.put(world.getName(), location);
     }
 
 
