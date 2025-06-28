@@ -22,6 +22,7 @@ public class CommandManager {
         new EnderChestCommand();
         new FlyCommand();
         new FlySpeedCommand();
+        new GmCommand();
         new HomeCommand(plugin);
         new InvSeeCommand();
         new MsgCommand();
