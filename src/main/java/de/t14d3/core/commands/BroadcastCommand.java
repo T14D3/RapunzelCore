@@ -7,6 +7,7 @@ import dev.jorel.commandapi.arguments.GreedyStringArgument;
 import dev.jorel.commandapi.arguments.StringArgument;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -21,6 +22,10 @@ public class BroadcastCommand {
                     String message = (String) args.get("message");
                     Component broadcastMessage = Main.getInstance().getMessage("commands.broadcast.format",
                             message, executor.getName());
+
+                    if (message.contains("--title") && executor.hasPermission("core.broadcast.title")) {
+                        Bukkit.getServer().showTitle(Title.title(broadcastMessage, Component.empty()));
+                    }
                     Bukkit.broadcast(broadcastMessage);
                     return Command.SINGLE_SUCCESS;
                 })
