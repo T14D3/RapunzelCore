@@ -14,12 +14,15 @@ import java.io.File;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class Main extends JavaPlugin {
     private MessageHandler messages;
     private static Main instance;
     private CommandManager commandManager;
     private Map<String, Location> spawns = new HashMap<>();
+    private final Map<UUID, Location> lastLocations = new ConcurrentHashMap<>();
 
     @Override
     public void onEnable() {
@@ -95,6 +98,14 @@ public final class Main extends JavaPlugin {
 
     public void setSpawn(World world, Location location) {
         spawns.put(world.getName(), location);
+    }
+
+    public void setLastLocation(UUID playerId, Location location) {
+        lastLocations.put(playerId, location);
+    }
+
+    public Location getLastLocation(UUID playerId) {
+        return lastLocations.get(playerId);
     }
 
 
