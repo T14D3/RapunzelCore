@@ -23,6 +23,8 @@ public class CommandManager {
         new FlyCommand();
         new FlySpeedCommand();
         new GmCommand();
+        new GodCommand();
+        new HealCommand();
         new HomeCommand(plugin);
         new InvSeeCommand();
         new MsgCommand();
