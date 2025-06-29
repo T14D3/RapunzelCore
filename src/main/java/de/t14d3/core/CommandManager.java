@@ -27,6 +27,7 @@ public class CommandManager {
         new InvSeeCommand();
         new MsgCommand();
         new OfflineTpCommand();
+        new PingCommand();
         new SetHomeCommand(plugin);
         new SocialSpyCommand();
         new SetSpawnCommand(plugin);
