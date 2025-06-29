@@ -59,3 +59,24 @@ permissions:
   core.spawn:
     description: Allows players to teleport to the server's spawn location.
     default: true
+  core.playtime:
+    description: Allows players to check playtime of themselves or others.
+    default: true
+  core.repair:
+    description: Allows players to repair items.
+    default: op
+  core.nick:
+    description: Allows players to change their nickname.
+    default: true
+  core.warp:
+    description: Allows players to teleport to warps.
+    default: true
+  core.setwarp:
+    description: Allows players to set warps.
+    default: op
+  core.delwarp:
+    description: Allows players to delete warps.
+    default: op
+  core.warps:
+    description: Allows players to list available warps.
+    default: true

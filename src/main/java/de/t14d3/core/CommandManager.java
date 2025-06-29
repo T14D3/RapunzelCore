@@ -37,6 +37,10 @@ public class CommandManager {
         new TeamChatCommand();
         new UInfoCommand();
         new VanishCommand();
+        new WarpsCommand(plugin);
+        new PlaytimeCommand(plugin);
+        new RepairCommand(plugin);
+        new NickCommand(plugin);
     }
 
     public void setHomeLocation(Player player, Location location) {
