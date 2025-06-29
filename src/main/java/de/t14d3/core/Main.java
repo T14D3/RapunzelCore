@@ -1,6 +1,7 @@
 package de.t14d3.core;
 
 import de.t14d3.core.listeners.ChatListener;
+import de.t14d3.core.listeners.EnderChestListener;
 import de.t14d3.core.listeners.InvSeeListener;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
@@ -35,6 +36,7 @@ public final class Main extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new InvSeeListener(), this);
         getServer().getPluginManager().registerEvents(new ChatListener(this), this);
+        getServer().getPluginManager().registerEvents(new EnderChestListener(), this);
 
         if (!getDataFolder().exists()) {
             getDataFolder().mkdir();
