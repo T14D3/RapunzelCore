@@ -25,20 +25,27 @@ public class ChatListener implements Listener {
     }
 
     @EventHandler
-    private void onChat(AsyncChatEvent event) {
-
-    }
-
-    @EventHandler
     private void onCommand(PlayerCommandPreprocessEvent event) {
+        if (event.getPlayer().hasPermission("core.socialspy.bypass")) {
+            return;
+        }
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            if (commands.contains(event.getMessage().split(" ")[0])) {
-                Bukkit.getServer().getOnlinePlayers().forEach(player -> {
-                    if (player.hasMetadata("socialspy")) {
-                        player.sendMessage(plugin.getMessage("commands.socialspy.message", event.getMessage()));
-                    }
-                });
-            }
+            commands.forEach(command -> {
+                String[] split = event.getMessage().split(" ");
+                if (split.length >= 2 && split[0].contains(command)) {
+                    String sender = event.getPlayer().getName();
+                    String receiver = split[1];
+                    String message = new StringBuilder(event.getMessage())
+                            .delete(0, split[0].length() + split[1].length() + 2)
+                            .toString();
+                    Bukkit.getServer().getOnlinePlayers().forEach(player -> {
+                        if (player.hasMetadata("socialspy")) {
+                            player.sendMessage(plugin.getMessage("commands.socialspy.message", sender, receiver, message));
+                        }
+                    });
+                }
+            });
         });
     }
+
 }

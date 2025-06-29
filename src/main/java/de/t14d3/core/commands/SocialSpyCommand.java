@@ -18,7 +18,7 @@ public class SocialSpyCommand {
     public SocialSpyCommand() {
         new CommandAPICommand("socialspy")
                 .withAliases("spy")
-                .withArguments(new EntitySelectorArgument.OnePlayer("player")
+                .withOptionalArguments(new EntitySelectorArgument.OnePlayer("player")
                         .withPermission("core.socialspy")
                         .replaceSuggestions((sender, builder) -> {
                             Bukkit.getOnlinePlayers().forEach(player -> {
@@ -31,7 +31,7 @@ public class SocialSpyCommand {
                 .withPermission("core.socialspy")
                 .executes((executor, args) -> {
                     Player sender = (Player) executor;
-                    Player target = (Player) args.get("player") == null ? (Player) args.get("player") : sender;
+                    Player target = args.get("player") == null ? (Player) args.get("player") : sender;
                     if (target == null) {
                         sender.sendMessage(Main.getInstance().getMessage("commands.socialspy.error.invalid", args.getRaw("player")));
                         return Command.SINGLE_SUCCESS;
