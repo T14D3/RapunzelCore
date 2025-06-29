@@ -18,32 +18,17 @@ public class SocialSpyCommand {
     public SocialSpyCommand() {
         new CommandAPICommand("socialspy")
                 .withAliases("spy")
-                .withOptionalArguments(new EntitySelectorArgument.OnePlayer("player")
-                        .withPermission("core.socialspy")
-                        .replaceSuggestions((sender, builder) -> {
-                            Bukkit.getOnlinePlayers().forEach(player -> {
-                                builder.suggest(player.getName());
-                            });
-                            return builder.buildFuture();
-                        })
-                )
                 .withFullDescription("Toggles social spy mode for the given player.")
                 .withPermission("core.socialspy")
                 .executes((executor, args) -> {
                     Player sender = (Player) executor;
-                    Player target = args.get("player") == null ? (Player) args.get("player") : sender;
-                    if (target == null) {
-                        sender.sendMessage(Main.getInstance().getMessage("commands.socialspy.error.invalid", args.getRaw("player")));
-                        return Command.SINGLE_SUCCESS;
-                    }
                     boolean enabled = sender.hasMetadata("socialspy");
                     if (enabled) {
                         sender.removeMetadata("socialspy", Main.getInstance());
                     } else {
                         sender.setMetadata("socialspy", new FixedMetadataValue(Main.getInstance(), true));
                     }
-                    Component message = Main.getInstance().getMessage("commands.socialspy.toggle",
-                            target.getName(), !enabled ? "enabled" : "disabled");
+                    Component message = Main.getInstance().getMessage("commands.socialspy.toggle",!enabled ? "enabled" : "disabled");
                     sender.sendMessage(message);
                     return Command.SINGLE_SUCCESS;
                 })
