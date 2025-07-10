@@ -6,45 +6,50 @@ import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.EntitySelectorArgument;
 import dev.jorel.commandapi.arguments.FloatArgument;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public class SpeedCommand {
+    private static final float DEFAULT_SPEED = 0.2F;
+    private static final float MAX_SPEED = 1.0F;
+
     public SpeedCommand() {
         new CommandAPICommand("speed")
                 .withArguments(
-                        new FloatArgument("speed", 0.0F, 100.0F)
+                        // allow user to specify 1–10, where 1 → default speed (0.2), 10 → max speed (1.0)
+                        new FloatArgument("speed", 0.0F, 10.0F)
                 )
                 .withOptionalArguments(
                         new EntitySelectorArgument.OnePlayer("player")
                                 .withPermission("core.speed")
                                 .replaceSuggestions((sender, builder) -> {
-                                    Bukkit.getOnlinePlayers().forEach(player -> {
-                                        builder.suggest(player.getName());
-                                    });
+                                    Bukkit.getOnlinePlayers().forEach(p -> builder.suggest(p.getName()));
                                     return builder.buildFuture();
                                 })
                 )
                 .executes((executor, args) -> {
                     Player sender = (Player) executor;
-                    Player target = args.get("player") == null ? (Player) args.get("player") : sender;
-                    float speed = (float) args.get("speed");
+                    Player target = args.get("player") == null
+                            ? sender
+                            : (Player) args.get("player");
 
-                    if (target == null) {
-                        sender.sendMessage(Main.getInstance().getMessage("commands.speed.error.invalid", args.getRaw("player")));
-                        return Command.SINGLE_SUCCESS;
-                    }
+                    float input = (float) args.get("speed");
+                    // normalize input from [1,10] to [0,1]
+                    float normalized = (input - 1.0F) / 9.0F;
+                    float mappedSpeed = DEFAULT_SPEED + normalized * (MAX_SPEED - DEFAULT_SPEED);
 
-                    target.setWalkSpeed(speed);
-                    Component message = Main.getInstance().getMessage("commands.speed.set",
-                                    target.getName(), String.format("%.2f", speed))
-                            .color(NamedTextColor.GREEN);
+                    target.setWalkSpeed(mappedSpeed);
+
+                    Component message = Main.getInstance().getMessage(
+                            "commands.speed.set",
+                            target.getName(),
+                            String.format("%.2f", mappedSpeed)
+                    );
                     sender.sendMessage(message);
 
                     return Command.SINGLE_SUCCESS;
                 })
-                .withFullDescription("Sets the movement speed for the given player.")
+                .withFullDescription("Sets movement speed between default (0.2) and 1.0 using values 1–10.")
                 .register(Main.getInstance());
     }
 }

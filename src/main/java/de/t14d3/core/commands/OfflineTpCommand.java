@@ -4,6 +4,7 @@ import com.mojang.brigadier.Command;
 import de.t14d3.core.Main;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.EntitySelectorArgument;
+import dev.jorel.commandapi.arguments.StringArgument;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -16,7 +17,7 @@ public class OfflineTpCommand {
         new CommandAPICommand("offlinetp")
                 .withAliases("otp")
                 .withPermission("core.offlinetp")
-                .withArguments(new EntitySelectorArgument.OnePlayer("player")
+                .withArguments(new StringArgument("player")
                         .replaceSuggestions((sender, builder) -> {
                             for (OfflinePlayer player : Bukkit.getOfflinePlayers()) {
                                 builder.suggest(player.getName());
@@ -38,8 +39,7 @@ public class OfflineTpCommand {
                     }
                     sender.teleport(location);
                     Component message = Main.getInstance().getMessage("commands.offlinetp.success",
-                                    target.getName())
-                            .color(NamedTextColor.GREEN);
+                                    target.getName());
                     sender.sendMessage(message);
                     return Command.SINGLE_SUCCESS;
                 })

@@ -5,6 +5,7 @@ import de.t14d3.core.Main;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.EntitySelectorArgument;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextReplacementConfig;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -12,7 +13,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class VanishCommand implements Listener {
@@ -21,7 +24,7 @@ public class VanishCommand implements Listener {
     public VanishCommand() {
         new CommandAPICommand("vanish")
                 .withAliases("v")
-                .withArguments(new EntitySelectorArgument.OnePlayer("player")
+                .withOptionalArguments(new EntitySelectorArgument.OnePlayer("player")
                         .withPermission("core.vanish")
                         .replaceSuggestions((sender, builder) -> {
                             Bukkit.getOnlinePlayers().forEach(player -> builder.suggest(player.getName()));
@@ -50,17 +53,21 @@ public class VanishCommand implements Listener {
                         for (Player viewer : Bukkit.getOnlinePlayers()) {
                             if (!viewer.hasPermission("core.vanish.see") && !viewer.equals(target)) {
                                 viewer.hidePlayer(Main.getInstance(), target);
+                            } else {
+                                viewer.sendMessage(Main.getInstance().getMessage("commands.vanish.fakemessage.leave.see", target.getName()));
                             }
                         }
-                        Bukkit.getServer().broadcast(Main.getInstance().getMessage("commands.vanish.fakemessage.join", target.getName()));
+                        Bukkit.getServer().broadcast(Main.getInstance().getMessage("commands.vanish.fakemessage.leave", target.getName()));
                     } else {
                         // Disable vanish: show to everyone
                         for (Player viewer : Bukkit.getOnlinePlayers()) {
                             if (!viewer.equals(target)) {
                                 viewer.showPlayer(Main.getInstance(), target);
+                            } else {
+                                viewer.sendMessage(Main.getInstance().getMessage("commands.vanish.fakemessage.join.see", target.getName()));
                             }
                         }
-                        Bukkit.getServer().broadcast(Main.getInstance().getMessage("commands.vanish.fakemessage.leave", target.getName()));
+                        Bukkit.getServer().broadcast(Main.getInstance().getMessage("commands.vanish.fakemessage.join", target.getName()));
                     }
 
                     // Notify sender
@@ -77,12 +84,26 @@ public class VanishCommand implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player joiner = event.getPlayer();
+        boolean canSee = joiner.hasPermission("core.vanish.see");
+        if (canSee) {
+            // Show list of vanished players to joiner
+            List<String> vanishedPlayersList = new ArrayList<>();
+            for (Map.Entry<Player, Boolean> entry : vanishedPlayers.entrySet()) {
+                Player vanished = entry.getKey();
+                boolean isVanished = entry.getValue();
+                if (isVanished) {
+                    vanishedPlayersList.add(vanished.getName());
+                }
+            }
+            Component message = Main.getInstance().getMessage("commands.vanish.list", String.join(", ", vanishedPlayersList));
+            joiner.sendMessage(message);
+        }
         // Hide existing vanished players from joiner if joiner lacks see permission
         for (Map.Entry<Player, Boolean> entry : vanishedPlayers.entrySet()) {
             Player vanished = entry.getKey();
             boolean isVanished = entry.getValue();
 
-            if (isVanished && !joiner.hasPermission("core.vanish.see") && !joiner.equals(vanished)) {
+            if (isVanished && !canSee && !joiner.equals(vanished)) {
                 joiner.hidePlayer(Main.getInstance(), vanished);
             }
         }
