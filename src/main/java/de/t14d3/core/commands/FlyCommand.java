@@ -12,7 +12,7 @@ public class FlyCommand {
     public FlyCommand() {
         new CommandAPICommand("fly")
                 .withAliases("f")
-                .withArguments(new EntitySelectorArgument.OnePlayer("player")
+                .withOptionalArguments(new EntitySelectorArgument.OnePlayer("player")
                         .withPermission("core.fly.others")
                         .replaceSuggestions((sender, builder) -> {
                             Bukkit.getOnlinePlayers().forEach(player -> {
@@ -25,12 +25,13 @@ public class FlyCommand {
                 .withPermission("core.fly")
                 .executes((executor, args) -> {
                     Player sender = (Player) executor;
-                    Player target = args.get("player") == null ? (Player) args.get("player") : sender;
+                    Player target = args.get("player") == null ? sender : (Player) args.get("player");
                     if (target == null) {
-                        sender.sendMessage(Main.getInstance().getMessage("commands.fly.error.invalid", args.getRaw("player")));
+                        sender.sendMessage(Main.getInstance().getMessage("commands.fly.error.invalid"));
                         return Command.SINGLE_SUCCESS;
                     }
                     boolean enabled = target.getAllowFlight();
+                    target.setAllowFlight(!enabled);
                     if (enabled) {
                         target.setFlying(false);
                     } else {
@@ -39,7 +40,6 @@ public class FlyCommand {
                             target.setFlying(true);
                         }
                     }
-                    target.setAllowFlight(!enabled);
                     Component message = Main.getInstance().getMessage("commands.fly.toggle",
                             target.getName(), !enabled ? "enabled" : "disabled");
                     sender.sendMessage(message);
