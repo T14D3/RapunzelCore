@@ -8,6 +8,7 @@ import dev.jorel.commandapi.arguments.StringArgument;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.MenuType;
 
@@ -38,15 +39,14 @@ public class GmCommand {
                         })
                 )
                 .executes((executor, args) -> {
-                    Player sender = (Player) executor;
                     Player target = (Player) args.get("player");
                     if (target == null) {
-                        target = sender;
+                        target = (Player) executor;
                     }
                     String gamemode = (String) args.get("gamemode");
 
                     if (target == null) {
-                        sender.sendMessage(Main.getInstance().getMessage("commands.gm.error.invalid", args.getRaw("player")));
+                        executor.sendMessage(Main.getInstance().getMessage("commands.gm.error.invalid", args.getRaw("player")));
                         return Command.SINGLE_SUCCESS;
                     }
                     try {
@@ -57,13 +57,13 @@ public class GmCommand {
                         try {
                             target.setGameMode(GameMode.valueOf(gamemode.toUpperCase()));
                         } catch (IllegalArgumentException e1) {
-                            sender.sendMessage(Main.getInstance().getMessage("commands.gm.error.invalid", gamemode));
+                            executor.sendMessage(Main.getInstance().getMessage("commands.gm.error.invalid", gamemode));
                             return Command.SINGLE_SUCCESS;
                         }
                     }
                     Component message = Main.getInstance().getMessage("commands.gm.success",
                                     target.getName(), gamemode);
-                    sender.sendMessage(message);
+                    executor.sendMessage(message);
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(Main.getInstance());
