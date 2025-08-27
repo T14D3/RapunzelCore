@@ -23,6 +23,7 @@ public final class Main extends JavaPlugin {
     private CommandManager commandManager;
     private Map<String, Location> spawns = new HashMap<>();
     private final Map<UUID, Location> lastLocations = new ConcurrentHashMap<>();
+    private boolean maintenanceMode;
 
     @Override
     public void onEnable() {
@@ -109,4 +110,11 @@ public final class Main extends JavaPlugin {
     }
 
 
+    public boolean isMaintenanceMode() {
+        return this.maintenanceMode;
+    }
+
+    public void setMaintenanceMode(boolean maintenanceMode) {
+        this.maintenanceMode = maintenanceMode;
+    }
 }
