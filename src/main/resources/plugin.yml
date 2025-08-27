@@ -80,3 +80,9 @@ permissions:
   core.warps:
     description: Allows players to list available warps.
     default: true
+  core.maintenance:
+    description: Allows players to toggle maintenance mode.
+    default: op
+  core.maintenance.bypass:
+    description: Allows players to bypass maintenance mode.
+    default: op
