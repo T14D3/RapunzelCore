@@ -41,6 +41,7 @@ public class CommandManager {
         new PlaytimeCommand(plugin);
         new RepairCommand(plugin);
         new NickCommand(plugin);
+        new ReloadCommand();
     }
 
     public void setHomeLocation(Player player, Location location) {

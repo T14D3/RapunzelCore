@@ -3,6 +3,7 @@ package de.t14d3.core;
 import de.t14d3.core.listeners.ChatListener;
 import de.t14d3.core.listeners.EnderChestListener;
 import de.t14d3.core.listeners.InvSeeListener;
+import de.t14d3.core.listeners.LastLocationTracker;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
 import net.kyori.adventure.text.Component;
@@ -41,6 +42,8 @@ public final class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new InvSeeListener(), this);
         getServer().getPluginManager().registerEvents(new ChatListener(this), this);
         getServer().getPluginManager().registerEvents(new EnderChestListener(), this);
+
+        new LastLocationTracker(this);
 
         if (!getDataFolder().exists()) {
             getDataFolder().mkdir();
@@ -105,16 +108,22 @@ public final class Main extends JavaPlugin {
         lastLocations.put(playerId, location);
     }
 
-    public Location getLastLocation(UUID playerId) {
-        return lastLocations.get(playerId);
+    public Map<String, Location> getSpawns() {
+        return spawns;
     }
 
+    public void reloadPlugin() {
+        // Reload plugin configuration
+        reloadConfig();
 
-    public boolean isMaintenanceMode() {
-        return this.maintenanceMode;
-    }
+        // Reload messages
+        messages.reloadMessages(this);
 
-    public void setMaintenanceMode(boolean maintenanceMode) {
-        this.maintenanceMode = maintenanceMode;
+        // Reload spawns from config
+        spawns.clear();
+        getServer().getWorlds().forEach(world -> {
+            spawns.put(world.getName(), getConfig().getLocation("spawn." + world.getName()));
+        });
+        spawns.put("global", getConfig().getLocation("spawn.global", getServer().getWorlds().get(0).getSpawnLocation()));
     }
 }
