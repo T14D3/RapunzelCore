@@ -1,4 +1,4 @@
-name: byDennyyEssentials
+name: Core
 version: '0.0.1'
 main: de.t14d3.core.Main
 api-version: '1.21'

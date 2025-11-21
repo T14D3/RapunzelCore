@@ -125,5 +125,20 @@ public final class Main extends JavaPlugin {
             spawns.put(world.getName(), getConfig().getLocation("spawn." + world.getName()));
         });
         spawns.put("global", getConfig().getLocation("spawn.global", getServer().getWorlds().get(0).getSpawnLocation()));
+
+        // Reload aliases
+        getCommandManager().getScriptManager().loadAliases();
+    }
+
+    public Location getLastLocation(UUID uuid) {
+        return lastLocations.get(uuid);
+    }
+
+    public boolean isMaintenanceMode() {
+        return maintenanceMode;
+    }
+
+    public void setMaintenanceMode(boolean state) {
+        maintenanceMode = state;
     }
 }

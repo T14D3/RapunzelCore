@@ -9,9 +9,11 @@ import org.bukkit.NamespacedKey;
 
 public class CommandManager {
     private final Main plugin;
+    private ScriptManager scriptManager;
 
     public CommandManager(Main plugin) {
         this.plugin = plugin;
+        this.scriptManager = new ScriptManager(plugin);
 
         new AnvilCommand();
         new BackCommand();
@@ -29,6 +31,10 @@ public class CommandManager {
         new MsgCommand();
         new OfflineTpCommand();
         new PingCommand();
+        new PlaytimeCommand(plugin);
+        new RepairCommand(plugin);
+        new NickCommand(plugin);
+        new ReloadCommand();
         new SetHomeCommand(plugin);
         new SocialSpyCommand();
         new SetSpawnCommand(plugin);
@@ -38,10 +44,14 @@ public class CommandManager {
         new UInfoCommand();
         new VanishCommand();
         new WarpsCommand(plugin);
-        new PlaytimeCommand(plugin);
-        new RepairCommand(plugin);
-        new NickCommand(plugin);
         new ReloadCommand();
+
+        // Register script and alias commands
+        new AliasCommand(scriptManager);
+        new ScriptCommand(scriptManager);
+
+        // Load aliases
+        scriptManager.loadAliases();
     }
 
     public void setHomeLocation(Player player, Location location) {
@@ -65,5 +75,9 @@ public class CommandManager {
     private Location stringToLocation(String data) {
         String[] parts = data.split(",");
         return new Location(Bukkit.getWorld(parts[0]), Double.parseDouble(parts[1]), Double.parseDouble(parts[2]), Double.parseDouble(parts[3]), Float.parseFloat(parts[4]), Float.parseFloat(parts[5]));
+    }
+
+    public ScriptManager getScriptManager() {
+        return scriptManager;
     }
 }
