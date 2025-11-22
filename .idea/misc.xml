@@ -2,9 +2,10 @@
 <project version="4">
   <component name="EntryPointsManager">
     <pattern value="de.t14d3.core.modules.Module" hierarchically="true" />
+    <pattern value="de.t14d3.core.modules.commands.Command" hierarchically="true" />
   </component>
   <component name="ExternalStorageConfigurationManager" enabled="true" />
-  <component name="ProjectRootManager" version="2" project-jdk-name="graalvm-24" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
 </project>
