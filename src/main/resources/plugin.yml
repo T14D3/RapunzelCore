@@ -1,8 +1,8 @@
 name: Core
 version: '0.0.1'
-main: de.t14d3.core.Main
+main: de.t14d3.rapunzelcore.Main
 api-version: '1.21'
-prefix: 'core'
+prefix: 'RapunzelCore'
 authors: [T14D3]
 permissions:
   core.broadcast:

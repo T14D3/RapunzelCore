@@ -1,1 +1,1 @@
-rootProject.name = "Core"
+rootProject.name = "RapunzelCore"
