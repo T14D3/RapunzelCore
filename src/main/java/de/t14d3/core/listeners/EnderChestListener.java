@@ -10,7 +10,7 @@ import org.bukkit.event.inventory.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
-import static de.t14d3.core.commands.EnderChestCommand.ENDER_CHEST_HOLDER;
+import static de.t14d3.core.modules.commands.EnderChestCommand.ENDER_CHEST_HOLDER;
 
 public class EnderChestListener implements Listener {
 
@@ -35,5 +35,11 @@ public class EnderChestListener implements Listener {
             evt.setCancelled(true);
             viewer.sendMessage(Main.getInstance().getMessage("commands.enderchest.error.modify"));
         }
+    }
+
+    public void unregister() {
+        InventoryClickEvent.getHandlerList().unregister(this);
+        InventoryDragEvent.getHandlerList().unregister(this);
+        InventoryCloseEvent.getHandlerList().unregister(this);
     }
 }

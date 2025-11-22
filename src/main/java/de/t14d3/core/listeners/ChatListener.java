@@ -48,4 +48,7 @@ public class ChatListener implements Listener {
         });
     }
 
+    public void unregister() {
+        PlayerCommandPreprocessEvent.getHandlerList().unregister(this);
+    }
 }

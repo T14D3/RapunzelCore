@@ -1,5 +1,5 @@
 plugins {
-    id ("java")
+    id("java")
     id("xyz.jpenilla.run-paper") version "2.3.1"
     id("com.gradleup.shadow") version "9.0.0-beta8"
 }
@@ -17,20 +17,26 @@ repositories {
         name = "sonatype"
         url = uri("https://oss.sonatype.org/content/groups/public/")
     }
+    maven {
+        name = "Central Portal Snapshots"
+        url = uri("https://central.sonatype.com/repository/maven-snapshots/")
+        // Only search this repository for the specific dependency
+        content {
+            includeModule("dev.jorel", "commandapi")
+        }
+    }
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.6-R0.1-SNAPSHOT")
-    implementation("dev.jorel:commandapi-bukkit-shade:10.1.0")
+    compileOnly("io.papermc.paper:paper-api:1.21.10-R0.1-SNAPSHOT")
+    implementation("dev.jorel:commandapi-paper-shade:11.0.1-SNAPSHOT")
+    implementation("org.reflections:reflections:0.9.11")
 }
 
 tasks {
-  runServer {
-    // Configure the Minecraft version for our task.
-    // This is the only required configuration besides applying the plugin.
-    // Your plugin's jar (or shadowJar if present) will be used automatically.
-    minecraftVersion("1.21.5")
-  }
+    runServer {
+        minecraftVersion("1.21.10")
+    }
 }
 
 val targetJavaVersion = 21
@@ -48,5 +54,11 @@ tasks.withType<JavaCompile>().configureEach {
 
     if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible) {
         options.release.set(targetJavaVersion)
+    }
+}
+
+tasks.shadowJar {
+    manifest {
+        attributes["paperweight-mappings-namespace"] = "mojang"
     }
 }

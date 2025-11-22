@@ -70,4 +70,11 @@ public class InvSeeListener implements Listener {
             }
         }
     }
+
+    public void unregister() {
+        PlayerQuitEvent.getHandlerList().unregister(this);
+        InventoryClickEvent.getHandlerList().unregister(this);
+        InventoryDragEvent.getHandlerList().unregister(this);
+        InventoryCloseEvent.getHandlerList().unregister(this);
+    }
 }

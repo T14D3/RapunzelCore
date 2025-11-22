@@ -1,30 +1,30 @@
 package de.t14d3.core;
 
-import de.t14d3.core.listeners.ChatListener;
-import de.t14d3.core.listeners.EnderChestListener;
-import de.t14d3.core.listeners.InvSeeListener;
-import de.t14d3.core.listeners.LastLocationTracker;
+import de.t14d3.core.commands.CoreCommand;
+import de.t14d3.core.modules.Module;
+import de.t14d3.core.util.ReflectionsUtil;
 import dev.jorel.commandapi.CommandAPI;
-import dev.jorel.commandapi.CommandAPIBukkitConfig;
+import dev.jorel.commandapi.CommandAPIPaperConfig;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class Main extends JavaPlugin {
     private MessageHandler messages;
     private static Main instance;
-    private CommandManager commandManager;
     private Map<String, Location> spawns = new HashMap<>();
-    private final Map<UUID, Location> lastLocations = new ConcurrentHashMap<>();
-    private boolean maintenanceMode;
+    private Map<String, Module> modules = new HashMap<>();
 
     @Override
     public void onEnable() {
@@ -37,13 +37,11 @@ public final class Main extends JavaPlugin {
         });
         spawns.put("global", getConfig().getLocation("spawn.global", getServer().getWorlds().get(0).getSpawnLocation()));
 
-        commandManager = new CommandManager(this);
+        // Load modules from config
+        loadModules();
 
-        getServer().getPluginManager().registerEvents(new InvSeeListener(), this);
-        getServer().getPluginManager().registerEvents(new ChatListener(this), this);
-        getServer().getPluginManager().registerEvents(new EnderChestListener(), this);
+        new CoreCommand();
 
-        new LastLocationTracker(this);
 
         if (!getDataFolder().exists()) {
             getDataFolder().mkdir();
@@ -61,10 +59,10 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onLoad() {
-        CommandAPI.onLoad(new CommandAPIBukkitConfig(this)
-                .verboseOutput(false)
-                .skipReloadDatapacks(true)
-                .silentLogs(true)
+        CommandAPI.onLoad(
+                new CommandAPIPaperConfig((JavaPlugin) this)
+                        .verboseOutput(true)
+                        .silentLogs(false)
         );
         instance = this;
     }
@@ -92,10 +90,6 @@ public final class Main extends JavaPlugin {
         return instance;
     }
 
-    public CommandManager getCommandManager() {
-        return commandManager;
-    }
-
     public Location getSpawn(World world) {
         return spawns.get(world.getName()) == null ? spawns.get("global") : spawns.get(world.getName());
     }
@@ -104,15 +98,14 @@ public final class Main extends JavaPlugin {
         spawns.put(world.getName(), location);
     }
 
-    public void setLastLocation(UUID playerId, Location location) {
-        lastLocations.put(playerId, location);
-    }
-
-    public Map<String, Location> getSpawns() {
-        return spawns;
-    }
 
     public void reloadPlugin() {
+        // Disable all modules
+        for (Module module : modules.values()) {
+            module.disable(this);
+        }
+        modules.clear();
+
         // Reload plugin configuration
         reloadConfig();
 
@@ -126,19 +119,25 @@ public final class Main extends JavaPlugin {
         });
         spawns.put("global", getConfig().getLocation("spawn.global", getServer().getWorlds().get(0).getSpawnLocation()));
 
-        // Reload aliases
-        getCommandManager().getScriptManager().loadAliases();
+        // Load modules
+        loadModules();
     }
 
-    public Location getLastLocation(UUID uuid) {
-        return lastLocations.get(uuid);
-    }
 
-    public boolean isMaintenanceMode() {
-        return maintenanceMode;
-    }
 
-    public void setMaintenanceMode(boolean state) {
-        maintenanceMode = state;
+    private void loadModules() {
+        ReflectionsUtil.getSubTypes(Module.class).forEach(clazz -> {
+            try {
+                Module module = clazz.getDeclaredConstructor().newInstance();
+                String name = module.getName();
+                if (getConfig().isBoolean("modules." + name) && getConfig().getBoolean("modules." + name)) {
+                    module.enable(this);
+                    modules.put(name, module);
+                    getLogger().info("Loaded module: " + name);
+                }
+            } catch (Exception e) {
+                getLogger().warning("Failed to load module " + clazz.getName() + ": " + e.getMessage());
+            }
+        });
     }
 }
