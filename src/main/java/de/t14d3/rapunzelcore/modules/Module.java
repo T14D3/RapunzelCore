@@ -6,9 +6,12 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public interface Module {
+    List<Module> MODULES = new ArrayList<>();
 
     void enable(Main plugin);
 

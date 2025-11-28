@@ -2,6 +2,7 @@ plugins {
     id("java")
     id("xyz.jpenilla.run-paper") version "2.3.1"
     id("com.gradleup.shadow") version "9.0.0-beta8"
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.19"
 }
 
 group = "de.t14d3"
@@ -28,7 +29,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.10-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.21.10-R0.1-SNAPSHOT")
     implementation("dev.jorel:commandapi-paper-shade:11.0.1-SNAPSHOT")
     implementation("org.reflections:reflections:0.9.11")
 }

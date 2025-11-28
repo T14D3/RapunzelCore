@@ -62,7 +62,7 @@ public class ReflectionsUtil {
             try {
                 if (shouldInstantiate.test(subType)) {
                     Method initMethod;
-                    var instance = subType.getDeclaredConstructor().newInstance();
+                    T instance = subType.getDeclaredConstructor().newInstance();
                     if (initMethodArgs.length == 0) {
                         initMethod = subType.getDeclaredMethod(initMethodName);
                         initMethod.invoke(instance);

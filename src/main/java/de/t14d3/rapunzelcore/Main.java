@@ -127,7 +127,7 @@ public final class Main extends JavaPlugin {
                 String name = module.getName();
                 if (getConfig().isBoolean("modules." + name) && getConfig().getBoolean("modules." + name)) {
                     module.enable(this);
-                    modules.put(name, module);
+                    Module.MODULES.add(module);
                     getLogger().info("Loaded module: " + name);
                 }
             } catch (Exception e) {
