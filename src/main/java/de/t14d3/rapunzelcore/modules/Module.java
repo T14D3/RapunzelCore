@@ -11,7 +11,6 @@ import java.util.List;
 
 
 public interface Module {
-    List<Module> MODULES = new ArrayList<>();
 
     void enable(Main plugin);
 

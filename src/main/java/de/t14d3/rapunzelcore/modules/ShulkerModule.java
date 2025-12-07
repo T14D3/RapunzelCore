@@ -8,6 +8,7 @@ import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -43,10 +44,7 @@ public class ShulkerModule implements Module {
     public void disable(Main plugin) {
         if (!enabled) return;
 
-        InventoryClickEvent.getHandlerList().unregister(listener);
-        InventoryDragEvent.getHandlerList().unregister(listener);
-        InventoryCloseEvent.getHandlerList().unregister(listener);
-        PlayerInteractEvent.getHandlerList().unregister(listener);
+        HandlerList.unregisterAll(listener);
 
         HOLDERS.forEach((player, holder) -> {
             // Close all open shulker views

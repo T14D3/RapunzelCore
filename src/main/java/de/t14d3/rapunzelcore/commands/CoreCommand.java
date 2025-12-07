@@ -7,7 +7,10 @@ public class CoreCommand {
     public CoreCommand() {
         new CommandAPICommand("rapunzelcore")
                 .withPermission("rapunzelcore.admin")
-                .withSubcommand(ReloadCommand.command())
+                .withSubcommands(
+                        ReloadCommand.command(),
+                        ModulesCommand.command()
+                )
                 .register(Main.getInstance());
     }
 }

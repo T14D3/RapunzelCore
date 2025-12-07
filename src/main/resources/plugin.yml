@@ -1,4 +1,4 @@
-name: Core
+name: RapunzelCore
 version: '0.0.1'
 main: de.t14d3.rapunzelcore.Main
 api-version: '1.21'

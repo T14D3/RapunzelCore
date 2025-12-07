@@ -2,6 +2,7 @@ package de.t14d3.rapunzelcore;
 
 import de.t14d3.rapunzelcore.commands.CoreCommand;
 import de.t14d3.rapunzelcore.modules.Module;
+import de.t14d3.rapunzelcore.modules.ModuleManager;
 import de.t14d3.rapunzelcore.util.ReflectionsUtil;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIPaperConfig;
@@ -19,7 +20,6 @@ public final class Main extends JavaPlugin {
     private MessageHandler messages;
     private static Main instance;
     private Map<String, Location> spawns = new HashMap<>();
-    private Map<String, Module> modules = new HashMap<>();
 
     @Override
     public void onEnable() {
@@ -96,10 +96,11 @@ public final class Main extends JavaPlugin {
 
     public void reloadPlugin() {
         // Disable all modules
-        for (Module module : modules.values()) {
+        for (Module module : ModuleManager.getModules()) {
+            getLogger().info("Disabling module: " + module.getName());
             module.disable(this);
+            ModuleManager.disable(module.getName());
         }
-        modules.clear();
 
         // Reload plugin configuration
         reloadConfig();
@@ -127,9 +128,9 @@ public final class Main extends JavaPlugin {
                 String name = module.getName();
                 if (getConfig().isBoolean("modules." + name) && getConfig().getBoolean("modules." + name)) {
                     module.enable(this);
-                    Module.MODULES.add(module);
                     getLogger().info("Loaded module: " + name);
                 }
+                ModuleManager.register(module);
             } catch (Exception e) {
                 getLogger().warning("Failed to load module " + clazz.getName() + ": " + e.getMessage());
             }
