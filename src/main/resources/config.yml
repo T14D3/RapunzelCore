@@ -8,7 +8,13 @@ modules:
   joinleave: true
   interaction: true
   shulker: true
-  warps: true
-  homes: true
+  warps: false
+  homes: false
   teamchat: true
   commands: true
+  teleports: true
+
+# Database configuration
+database:
+  # JDBC connection string
+  jdbc: "jdbc:sqlite:plugins/RapunzelCore/rapunzelcore.db"

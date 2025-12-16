@@ -26,12 +26,14 @@ repositories {
             includeModule("dev.jorel", "commandapi")
         }
     }
+    maven { url = uri("https://jitpack.io") }
 }
 
 dependencies {
     paperweight.paperDevBundle("1.21.10-R0.1-SNAPSHOT")
     implementation("dev.jorel:commandapi-paper-shade:11.0.1-SNAPSHOT")
     implementation("org.reflections:reflections:0.9.11")
+    implementation("de.t14d3:spool:b3b13b2bcf")
 }
 
 tasks {

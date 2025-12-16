@@ -6,7 +6,9 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.parsed;
 
@@ -24,6 +26,7 @@ public class MessageHandler {
         cachedMessages.clear();
         File messagesFile = new File(plugin.getDataFolder(), "messages.properties");
         Properties messagesConfig = new Properties();
+        updateMessages(messagesConfig);
         try {
             messagesConfig.load(new FileInputStream(messagesFile));
         } catch (Exception e) {
@@ -34,6 +37,30 @@ public class MessageHandler {
             rawMessages.put(key.toString(), raw);
             cachedMessages.put(key.toString(), mm.deserialize(raw));
         });
+    }
+
+    private void updateMessages(Properties currentMessages) {
+        Properties defaultMessages = new Properties();
+        try {
+            defaultMessages.load(getClass().getResourceAsStream("/messages.properties"));
+        } catch (Exception e) {
+            Main.getInstance().getLogger().warning("Failed to load default messages.properties: " + e.getMessage());
+        }
+        AtomicInteger changes = new AtomicInteger();
+        defaultMessages.keySet().forEach(key -> {
+            String raw = defaultMessages.getProperty(key.toString());
+            if (!currentMessages.containsKey(key.toString())) {
+                currentMessages.put(key.toString(), raw);
+                changes.getAndIncrement();
+            }
+        });
+        Main.getInstance().getLogger().info("Updated " + changes.get() + " messages");
+        try {
+            currentMessages.store(new FileOutputStream(Main.getInstance().getDataFolder() + "/messages.properties"), "");
+        } catch (Exception e) {
+            Main.getInstance().getLogger().warning("Failed to save messages.properties: " + e.getMessage());
+        }
+
     }
 
     public Component getMessage(String key) {

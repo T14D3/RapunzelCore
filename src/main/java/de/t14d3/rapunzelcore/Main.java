@@ -1,8 +1,10 @@
 package de.t14d3.rapunzelcore;
 
 import de.t14d3.rapunzelcore.commands.CoreCommand;
+import de.t14d3.rapunzelcore.database.CoreDatabase;
 import de.t14d3.rapunzelcore.modules.Module;
 import de.t14d3.rapunzelcore.modules.ModuleManager;
+import de.t14d3.rapunzelcore.modules.teleports.WarpsRepository;
 import de.t14d3.rapunzelcore.util.ReflectionsUtil;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIPaperConfig;
@@ -13,24 +15,19 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
 
 public final class Main extends JavaPlugin {
     private MessageHandler messages;
     private static Main instance;
-    private Map<String, Location> spawns = new HashMap<>();
+    private CoreDatabase coreDatabase;
 
     @Override
     public void onEnable() {
         CommandAPI.onEnable();
         messages = new MessageHandler(this);
+        coreDatabase = new CoreDatabase(this);
         saveDefaultConfig();
 
-        getServer().getWorlds().forEach(world -> {
-            spawns.put(world.getName(), getConfig().getLocation("spawn." + world.getName()));
-        });
-        spawns.put("global", getConfig().getLocation("spawn.global", getServer().getWorlds().get(0).getSpawnLocation()));
 
         // Load modules from config
         loadModules();
@@ -65,8 +62,6 @@ public final class Main extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
-        spawns.forEach((world, location) -> getConfig().set("spawn." + world, location));
-        saveConfig();
     }
 
     public MessageHandler getMessages() {
@@ -86,11 +81,19 @@ public final class Main extends JavaPlugin {
     }
 
     public Location getSpawn(World world) {
-        return spawns.get(world.getName()) == null ? spawns.get("global") : spawns.get(world.getName());
+        Location spawn = WarpsRepository.getSpawn(world.getName());
+        if (spawn == null) {
+            spawn = world.getSpawnLocation();
+        }
+        return spawn;
     }
 
     public void setSpawn(World world, Location location) {
-        spawns.put(world.getName(), location);
+        WarpsRepository.setSpawn(world.getName(), location);
+    }
+
+    public CoreDatabase getCoreDatabase() {
+        return coreDatabase;
     }
 
 
@@ -107,13 +110,6 @@ public final class Main extends JavaPlugin {
 
         // Reload messages
         messages.reloadMessages(this);
-
-        // Reload spawns from config
-        spawns.clear();
-        getServer().getWorlds().forEach(world -> {
-            spawns.put(world.getName(), getConfig().getLocation("spawn." + world.getName()));
-        });
-        spawns.put("global", getConfig().getLocation("spawn.global", getServer().getWorlds().get(0).getSpawnLocation()));
 
         // Load modules
         loadModules();
