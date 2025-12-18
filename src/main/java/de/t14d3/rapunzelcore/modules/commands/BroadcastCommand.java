@@ -1,4 +1,4 @@
-package de.t14d3.rapunzelcore.commands;
+package de.t14d3.rapunzelcore.modules.commands;
 
 import com.mojang.brigadier.Command;
 import de.t14d3.rapunzelcore.Main;

@@ -16,6 +16,9 @@ public class Player {
     @OneToMany(targetEntity = Home.class, mappedBy = "player", cascade = CascadeType.ALL)
     private List<Home> homes = new ArrayList<>();
 
+    @Column(name = "tp_toggle")
+    private boolean tpToggle = false;
+
     public List<Home> getHomes() {
         return homes;
     }
@@ -29,5 +32,13 @@ public class Player {
     public void addHome(Home home) {
         this.homes.add(home);
         home.setPlayer(this);
+    }
+
+    public boolean isTpToggle() {
+        return tpToggle;
+    }
+
+    public void setTpToggle(boolean tpToggle) {
+        this.tpToggle = tpToggle;
     }
 }
