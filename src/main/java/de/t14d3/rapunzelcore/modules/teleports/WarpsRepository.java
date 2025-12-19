@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static de.t14d3.rapunzelcore.database.CoreDatabase.flushAsync;
+
 public class WarpsRepository extends EntityRepository<Warp> {
     private static final WarpsRepository instance = new WarpsRepository();
 
@@ -65,14 +67,14 @@ public class WarpsRepository extends EntityRepository<Warp> {
         warp.setPermission(permission);
         instance.save(warp);
         instance.entityManager.persist(warp);
-        instance.entityManager.flush();
+        flushAsync();
     }
 
     public static void deleteWarp(String name) {
         Warp warp = getWarp(name);
         if (warp != null) {
             instance.deleteById(warp.getId());
-            instance.entityManager.flush();
+            flushAsync();
         }
     }
 

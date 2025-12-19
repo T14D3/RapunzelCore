@@ -1,58 +1,40 @@
 package de.t14d3.rapunzelcore.modules.teleports;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.UUID;
 
 public class TpaRequest {
-    private final UUID requesterId;
-    private final long requestTime;
+    private final Player requester;
+    private final Player target;
+    private final int requestTime;
     private final boolean isTpaHere;
-    private BukkitTask expirationTask;
 
     public TpaRequest(Player requester, Player target, boolean isTpaHere) {
-        this.requesterId = requester.getUniqueId();
-        this.requestTime = System.currentTimeMillis();
+        this.requester = requester;
+        this.target = target;
+        this.requestTime = Bukkit.getCurrentTick();
         this.isTpaHere = isTpaHere;
     }
 
     public Player getRequester() {
-        return Bukkit.getPlayer(requesterId);
+        return requester;
     }
 
-    public Player getTarget(UUID targetId) {
-        return Bukkit.getPlayer(targetId);
+    public Player getTarget() {
+        return target;
     }
 
-    public long getRequestTime() {
+    public UUID getTargetId() {
+        return target.getUniqueId();
+    }
+
+    public int getRequestTime() {
         return requestTime;
     }
 
-    public boolean isTpaHere() {
-        return isTpaHere;
-    }
-
-    public void setExpirationTask(BukkitTask task) {
-        if (this.expirationTask != null) {
-            this.expirationTask.cancel();
-        }
-        this.expirationTask = task;
-    }
-
-    public void cancelExpiration() {
-        if (this.expirationTask != null) {
-            this.expirationTask.cancel();
-            this.expirationTask = null;
-        }
-    }
-
-    public void teleport(UUID targetId) {
-        Player requester = getRequester();
-        Player target = getTarget(targetId);
-
+    public void teleport() {
         if (requester == null || target == null) return;
 
         if (isTpaHere) {

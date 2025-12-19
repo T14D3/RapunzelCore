@@ -34,12 +34,12 @@ public class FlySpeedCommand implements Command {
                     float speed = (float) args.get("speed");
 
                     if (target == null) {
-                        sender.sendMessage(Main.getInstance().getMessage("commands.flyspeed.error.invalid", args.getRaw("player")));
+                        sender.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.flyspeed.error.invalid", args.getRaw("player")));
                         return Command.SINGLE_SUCCESS;
                     }
 
                     target.setFlySpeed(speed);
-                    Component message = Main.getInstance().getMessage("commands.flyspeed.set",
+                    Component message = Main.getInstance().getMessageHandler().getMessage("commands.flyspeed.set",
                                     target.getName(), String.format("%.2f", speed))
                             .color(NamedTextColor.GREEN);
                     sender.sendMessage(message);

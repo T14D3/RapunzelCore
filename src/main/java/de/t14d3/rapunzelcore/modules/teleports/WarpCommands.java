@@ -40,16 +40,16 @@ public class WarpCommands {
                     String warpName = (String) args.get("warpName");
                     Warp warp = WarpsRepository.getWarp(warpName);
                     if (warp == null) {
-                        player.sendMessage(plugin.getMessage("teleports.warp.error.invalid", warpName));
+                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.warp.error.invalid", warpName));
                         return Command.SINGLE_SUCCESS;
                     }
                     String perm = warp.getPermission();
                     if (perm != null && !player.hasPermission(perm)) {
-                        player.sendMessage(plugin.getMessage("teleports.warp.error.no_permission", warpName));
+                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.warp.error.no_permission", warpName));
                         return Command.SINGLE_SUCCESS;
                     }
                     player.teleport(warp.getLocation());
-                    player.sendMessage(plugin.getMessage("teleports.warp.success", warpName));
+                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.warp.success", warpName));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
@@ -67,7 +67,7 @@ public class WarpCommands {
                     String warpName = (String) args.get("warpName");
                     String permission = (String) args.get("permission");
                     WarpsRepository.setWarp(warpName, player.getLocation(), permission);
-                    player.sendMessage(plugin.getMessage("teleports.setwarp.success", warpName).color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
+                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.setwarp.success", warpName).color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
@@ -82,11 +82,11 @@ public class WarpCommands {
                     String warpName = (String) args.get("warpName");
                     Location location = WarpsRepository.getWarpLocation(warpName);
                     if (location == null) {
-                        player.sendMessage(plugin.getMessage("teleports.delwarp.error.invalid", warpName));
+                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.delwarp.error.invalid", warpName));
                         return Command.SINGLE_SUCCESS;
                     }
                     WarpsRepository.deleteWarp(warpName);
-                    player.sendMessage(plugin.getMessage("teleports.delwarp.success", warpName));
+                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.delwarp.success", warpName));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
@@ -99,21 +99,21 @@ public class WarpCommands {
                     Player player = (Player) executor;
                     List<Warp> warps = WarpsRepository.getWarps();
                     if (warps.isEmpty()) {
-                        player.sendMessage(plugin.getMessage("teleports.warps.error.none"));
+                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.warps.error.none"));
                         return Command.SINGLE_SUCCESS;
                     }
-                    Component message = plugin.getMessage("teleports.warps.header");
+                    Component message = plugin.getMessageHandler().getMessage("teleports.warps.header");
                     for (Warp warp : warps) {
                         String perm = warp.getPermission();
                         Location loc = warp.getLocation();
-                        Component entry = plugin.getMessage("teleports.warps.entry",
+                        Component entry = plugin.getMessageHandler().getMessage("teleports.warps.entry",
                                 warp.getName(),
                                 String.valueOf(loc.getBlockX()),
                                 String.valueOf(loc.getBlockY()),
                                 String.valueOf(loc.getBlockZ())
                         );
                         if (perm != null) {
-                            entry = entry.append(plugin.getMessage("teleports.warps.permission", perm));
+                            entry = entry.append(plugin.getMessageHandler().getMessage("teleports.warps.permission", perm));
                         }
                         message = message.appendNewline().append(entry);
                     }
@@ -133,7 +133,7 @@ public class WarpCommands {
                         spawnLocation = player.getWorld().getSpawnLocation();
                     }
                     player.teleport(spawnLocation);
-                    player.sendMessage(plugin.getMessage("teleports.spawn.success"));
+                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.spawn.success"));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
@@ -145,7 +145,7 @@ public class WarpCommands {
                 .executes((executor, args) -> {
                     Player player = (Player) executor;
                     WarpsRepository.setSpawn(player.getWorld().getName(), player.getLocation());
-                    player.sendMessage(plugin.getMessage("teleports.setspawn.success").color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
+                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.setspawn.success").color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);

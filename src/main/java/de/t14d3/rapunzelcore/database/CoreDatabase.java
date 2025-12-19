@@ -6,27 +6,25 @@ import de.t14d3.rapunzelcore.entities.Player;
 import de.t14d3.rapunzelcore.entities.Warp;
 import de.t14d3.spool.core.EntityManager;
 import de.t14d3.spool.migration.MigrationManager;
-import de.t14d3.spool.migration.SchemaDiff;
 import de.t14d3.spool.migration.SchemaIntrospector;
+import org.bukkit.Bukkit;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.util.List;
-import java.util.UUID;
 
 public class CoreDatabase {
     private static EntityManager entityManager;
 
     public CoreDatabase(Main plugin) {
         String jdbc = plugin.getConfig().getString("database.jdbc", "jdbc:sqlite:plugins/RapunzelCore/rapunzelcore.db");
+        Connection conn;
         try {
-            Connection conn = DriverManager.getConnection(jdbc);
-            entityManager = EntityManager.create(conn);
-            plugin.getLogger().info("Connected to database with dialect " + entityManager.getDialect());
+            conn = DriverManager.getConnection(jdbc);
         } catch (Exception e) {
-            plugin.getLogger().severe("Failed to connect to database: " + e.getMessage());
             throw new RuntimeException("CoreDatabase initialization failed", e);
         }
+        entityManager = EntityManager.create(conn);
+        plugin.getLogger().info("Connected to database with dialect " + entityManager.getDialect());
 
         // Run DB migrations
         plugin.getLogger().info("Running DB migrations...");
@@ -45,5 +43,13 @@ public class CoreDatabase {
 
     public static EntityManager getEntityManager() {
         return entityManager;
+    }
+
+    public static void flushAsync() {
+        Bukkit.getScheduler().runTaskAsynchronously(Main.getInstance(), () -> {
+            synchronized (entityManager) {
+                entityManager.flush();
+            }
+        });
     }
 }

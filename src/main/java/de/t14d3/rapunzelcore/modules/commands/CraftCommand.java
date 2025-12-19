@@ -14,6 +14,7 @@ public class CraftCommand implements Command {
                 .withPermission("rapunzelcore.craft")
                 .executes((executor, args) -> {
                     Player player = (Player) executor;
+                    // noinspection UnstableApiUsage
                     MenuType.Typed.CRAFTING.builder().build(player).open();
                     return Command.SINGLE_SUCCESS;
                 })

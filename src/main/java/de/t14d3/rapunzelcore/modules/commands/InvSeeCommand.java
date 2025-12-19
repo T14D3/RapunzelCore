@@ -39,13 +39,13 @@ public class InvSeeCommand implements Command {
 
                     // Check if the target player is valid (online and exists)
                     if (target == null || !target.isOnline()) {
-                        sender.sendMessage(Main.getInstance().getMessage("commands.invsee.error.invalid", args.getRaw("player")));
+                        sender.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.invsee.error.invalid", args.getRaw("player")));
                         return Command.SINGLE_SUCCESS;
                     }
 
                     // Prevent a player from inspecting their own inventory
                     if (sender.equals(target)) {
-                        sender.sendMessage(Main.getInstance().getMessage("commands.invsee.error.self"));
+                        sender.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.invsee.error.self"));
                         return Command.SINGLE_SUCCESS;
                     }
 
@@ -57,7 +57,7 @@ public class InvSeeCommand implements Command {
                     PlayerInventoryMirror mirror = new PlayerInventoryMirror(sender, target);
                     mirror.open();
 
-                    sender.sendMessage(Main.getInstance().getMessage("commands.invsee.opened", target.getName()));
+                    sender.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.invsee.opened", target.getName()));
                     return Command.SINGLE_SUCCESS; // Command executed successfully
                 })
                 .register(Main.getInstance());

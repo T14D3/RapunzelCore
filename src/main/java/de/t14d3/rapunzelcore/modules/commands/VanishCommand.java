@@ -39,7 +39,7 @@ public class VanishCommand implements Listener, Command {
 
                     if (target == null) {
                         sender.sendMessage(
-                                Main.getInstance().getMessage("commands.vanish.error.invalid", args.getRaw("player"))
+                                Main.getInstance().getMessageHandler().getMessage("commands.vanish.error.invalid", args.getRaw("player"))
                         );
                         return Command.SINGLE_SUCCESS;
                     }
@@ -53,24 +53,25 @@ public class VanishCommand implements Listener, Command {
                             if (!viewer.hasPermission("rapunzelcore.vanish.see") && !viewer.equals(target)) {
                                 viewer.hidePlayer(Main.getInstance(), target);
                             } else {
-                                viewer.sendMessage(Main.getInstance().getMessage("commands.vanish.fakemessage.leave.see", target.getName()));
+                                viewer.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.vanish.fakemessage.leave.see", target.getName()));
                             }
                         }
-                        Bukkit.getServer().broadcast(Main.getInstance().getMessage("commands.vanish.fakemessage.leave", target.getName()));
+                        Bukkit.getServer().broadcast(Main.getInstance().getMessageHandler().getMessage("commands.vanish.fakemessage.leave", target.getName()));
                     } else {
                         // Disable vanish: show to everyone
                         for (Player viewer : Bukkit.getOnlinePlayers()) {
                             if (!viewer.equals(target)) {
                                 viewer.showPlayer(Main.getInstance(), target);
                             } else {
-                                viewer.sendMessage(Main.getInstance().getMessage("commands.vanish.fakemessage.join.see", target.getName()));
+                                viewer.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.vanish.fakemessage.join.see", target.getName()));
                             }
                         }
-                        Bukkit.getServer().broadcast(Main.getInstance().getMessage("commands.vanish.fakemessage.join", target.getName()));
+                        Bukkit.getServer().broadcast(Main.getInstance().getMessageHandler().getMessage("commands.vanish.fakemessage.join", target.getName()));
                     }
 
                     // Notify sender
                     Component message = Main.getInstance()
+                            .getMessageHandler()
                             .getMessage("commands.vanish.toggle", target.getName(), !isVanished ? "enabled" : "disabled")
                             .color(!isVanished ? NamedTextColor.GREEN : NamedTextColor.RED);
                     sender.sendMessage(message);
@@ -100,7 +101,7 @@ public class VanishCommand implements Listener, Command {
                     vanishedPlayersList.add(vanished.getName());
                 }
             }
-            Component message = Main.getInstance().getMessage("commands.vanish.list", String.join(", ", vanishedPlayersList));
+            Component message = Main.getInstance().getMessageHandler().getMessage("commands.vanish.list", String.join(", ", vanishedPlayersList));
             joiner.sendMessage(message);
         }
         // Hide existing vanished players from joiner if joiner lacks see permission

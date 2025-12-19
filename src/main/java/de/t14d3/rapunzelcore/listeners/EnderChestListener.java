@@ -33,7 +33,7 @@ public class EnderChestListener implements Listener {
         InventoryHolder holder = top.getHolder();
         if (holder == ENDER_CHEST_HOLDER) {
             evt.setCancelled(true);
-            viewer.sendMessage(Main.getInstance().getMessage("commands.enderchest.error.modify"));
+            viewer.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.enderchest.error.modify"));
         }
     }
 

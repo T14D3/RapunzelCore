@@ -15,7 +15,7 @@ public class ReloadCommand {
 
                     plugin.reloadPlugin();
 
-                    executor.sendMessage(plugin.getMessage("commands.reload.success"));
+                    executor.sendMessage(plugin.getMessageHandler().getMessage("commands.reload.success"));
                     plugin.getLogger().info("Core plugin reloaded by " + executor.getName());
 
                     return Command.SINGLE_SUCCESS;

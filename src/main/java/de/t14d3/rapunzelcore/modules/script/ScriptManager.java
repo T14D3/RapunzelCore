@@ -181,7 +181,7 @@ public class ScriptManager {
 
     public void addAlias(String name, String script, CommandSender creator) {
         if (creator != null && !checkScriptPermissions(creator, script)) {
-            creator.sendMessage(plugin.getMessage("script.permission.denied"));
+            creator.sendMessage(plugin.getMessageHandler().getMessage("script.permission.denied"));
             return;
         }
         script = convertLegacyToMiniMessage(script);
@@ -196,7 +196,7 @@ public class ScriptManager {
                     AliasData data = aliases.get(name);
                     if (data == null) return 1;
                     if (data.permission != null && executor instanceof Player player && !player.hasPermission(data.permission)) {
-                        executor.sendMessage(plugin.getMessage("alias.permission.denied"));
+                        executor.sendMessage(plugin.getMessageHandler().getMessage("alias.permission.denied"));
                         return 1;
                     }
                     String modifiedScript = injectArgs(data.script, ((String) args.getOrDefault("args", "")).split(" "));
@@ -236,9 +236,9 @@ public class ScriptManager {
                 String newScript = String.join("\n", lines);
                 if (checkScriptPermissions(editor, newScript)) {
                     data.script = newScript;
-                    editor.sendMessage(plugin.getMessage("alias.line.updated"));
+                    editor.sendMessage(plugin.getMessageHandler().getMessage("alias.line.updated"));
                 } else {
-                    editor.sendMessage(plugin.getMessage("script.permission.denied"));
+                    editor.sendMessage(plugin.getMessageHandler().getMessage("script.permission.denied"));
                 }
             }
         }
@@ -251,9 +251,9 @@ public class ScriptManager {
             String newScript = data.script + "\n" + newLine;
             if (checkScriptPermissions(editor, newScript)) {
                 data.script = newScript;
-                editor.sendMessage(plugin.getMessage("alias.line.added"));
+                editor.sendMessage(plugin.getMessageHandler().getMessage("alias.line.added"));
             } else {
-                editor.sendMessage(plugin.getMessage("script.permission.denied"));
+                editor.sendMessage(plugin.getMessageHandler().getMessage("script.permission.denied"));
             }
         }
     }

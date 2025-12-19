@@ -40,7 +40,7 @@ public class SpeedCommand implements Command {
 
                     target.setWalkSpeed(mappedSpeed);
 
-                    Component message = Main.getInstance().getMessage(
+                    Component message = Main.getInstance().getMessageHandler().getMessage(
                             "commands.speed.set",
                             target.getName(),
                             String.format("%.2f", mappedSpeed)

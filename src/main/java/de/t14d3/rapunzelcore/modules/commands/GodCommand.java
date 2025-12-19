@@ -26,11 +26,11 @@ public class GodCommand implements Command {
                     Player target = args.get("player") == null ? sender : (Player) args.get("player");
 
                     if (target == null) {
-                        sender.sendMessage(Main.getInstance().getMessage("commands.error.invalid", args.getRaw("player")));
+                        sender.sendMessage(Main.getInstance().getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("player")));
                         return Command.SINGLE_SUCCESS;
                     }
                     target.setInvulnerable(!target.isInvulnerable());
-                    sender.sendMessage(Main.getInstance().getMessage("commands.god.success", target.getName(), target.isInvulnerable() ? "enabled" : "disabled"));
+                    sender.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.god.success", target.getName(), target.isInvulnerable() ? "enabled" : "disabled"));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(Main.getInstance());

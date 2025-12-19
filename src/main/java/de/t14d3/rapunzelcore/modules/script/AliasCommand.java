@@ -37,16 +37,16 @@ public class AliasCommand {
                         .executes((executor, args) -> {
                             String name = (String) args.get("name");
                             scriptManager.removeAlias(name);
-                            executor.sendMessage(Main.getInstance().getMessage("alias.removed", name));
+                            executor.sendMessage(Main.getInstance().getMessageHandler().getMessage("alias.removed", name));
                             return Command.SINGLE_SUCCESS;
                         }))
                 .withSubcommand(new CommandAPICommand("list")
                         .executes((executor, args) -> {
                             var aliases = scriptManager.getAliases();
                             if (aliases.isEmpty()) {
-                                executor.sendMessage(Main.getInstance().getMessage("alias.list.empty"));
+                                executor.sendMessage(Main.getInstance().getMessageHandler().getMessage("alias.list.empty"));
                             } else {
-                                executor.sendMessage(Main.getInstance().getMessage("alias.list.header"));
+                                executor.sendMessage(Main.getInstance().getMessageHandler().getMessage("alias.list.header"));
                                 aliases.forEach((name, data) -> {
                                     if (data.permission == null || !(executor instanceof Player player) || player.hasPermission(data.permission)) {
                                         Component editButton = Component.text("[Edit]").color(NamedTextColor.GREEN)
@@ -87,7 +87,7 @@ public class AliasCommand {
                                     String name = (String) args.get("name");
                                     int index = (Integer) args.get("index");
                                     scriptManager.removeAliasLine(name, index - 1);
-                                    executor.sendMessage(Main.getInstance().getMessage("alias.line.removed"));
+                                    executor.sendMessage(Main.getInstance().getMessageHandler().getMessage("alias.line.removed"));
                                     showEditor(executor, name);
                                     return Command.SINGLE_SUCCESS;
                                 }))
@@ -101,14 +101,14 @@ public class AliasCommand {
                                     if (data != null) {
                                         if (perm.isEmpty() || "clear".equals(perm)) {
                                             data.permission = null;
-                                            executor.sendMessage(Main.getInstance().getMessage("alias.permission.cleared"));
+                                            executor.sendMessage(Main.getInstance().getMessageHandler().getMessage("alias.permission.cleared"));
                                         } else {
                                             data.permission = perm;
-                                            executor.sendMessage(Main.getInstance().getMessage("alias.permission.set", perm));
+                                            executor.sendMessage(Main.getInstance().getMessageHandler().getMessage("alias.permission.set", perm));
                                         }
                                         scriptManager.saveAliases();
                                     } else {
-                                        executor.sendMessage(Main.getInstance().getMessage("alias.not.found"));
+                                        executor.sendMessage(Main.getInstance().getMessageHandler().getMessage("alias.not.found"));
                                     }
                                     return Command.SINGLE_SUCCESS;
                                 })))
@@ -120,12 +120,12 @@ public class AliasCommand {
         var aliases = scriptManager.getAliases();
         ScriptManager.AliasData data = aliases.get(name);
         if (data == null) {
-            sender.sendMessage(Main.getInstance().getMessage("alias.not.found"));
+            sender.sendMessage(Main.getInstance().getMessageHandler().getMessage("alias.not.found"));
             return;
         }
         String script = data.script;
         String[] lines = script.split("\n");
-        sender.sendMessage(Main.getInstance().getMessage("alias.editor.header", name));
+        sender.sendMessage(Main.getInstance().getMessageHandler().getMessage("alias.editor.header", name));
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i].trim();
             Component lineComp = Component.text((i + 1) + ": " + line);

@@ -16,6 +16,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static de.t14d3.rapunzelcore.database.CoreDatabase.flushAsync;
+
 public class HomesRepository extends EntityRepository<Home> {
     private static final HomesRepository instance = new HomesRepository();
 
@@ -69,7 +71,7 @@ public class HomesRepository extends EntityRepository<Home> {
             home.setName(name);
             player.addHome(home);
             instance.entityManager.persist(player);
-            instance.entityManager.flush();
+            flushAsync();
         }
         instance.entityManager.refresh(home);
         home.setWorld(location.getWorld().getName());
@@ -79,7 +81,7 @@ public class HomesRepository extends EntityRepository<Home> {
         home.setYaw(location.getYaw());
         home.setPitch(location.getPitch());
         instance.save(home);
-        instance.entityManager.flush();
+        flushAsync();
     }
 
     public static void deleteHome(org.bukkit.entity.Player bplayer, String name) {
@@ -87,6 +89,6 @@ public class HomesRepository extends EntityRepository<Home> {
         if (player == null) return;
         HomesRepository.getHome(bplayer, name).setPlayer(null);
         instance.deleteById(HomesRepository.getHome(bplayer, name).getId());
-        instance.entityManager.flush();
+        flushAsync();
     }
 }

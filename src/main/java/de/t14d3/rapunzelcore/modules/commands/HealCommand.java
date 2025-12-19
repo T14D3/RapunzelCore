@@ -27,11 +27,11 @@ public class HealCommand implements Command {
                     Player target = args.get("player") == null ? sender : (Player) args.get("player");
 
                     if (target == null) {
-                        sender.sendMessage(Main.getInstance().getMessage("commands.error.invalid", args.getRaw("player")));
+                        sender.sendMessage(Main.getInstance().getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("player")));
                         return Command.SINGLE_SUCCESS;
                     }
                     target.setHealth(target.getAttribute(Attribute.MAX_HEALTH).getValue());
-                    sender.sendMessage(Main.getInstance().getMessage("commands.heal.success", target.getName()));
+                    sender.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.heal.success", target.getName()));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(Main.getInstance());

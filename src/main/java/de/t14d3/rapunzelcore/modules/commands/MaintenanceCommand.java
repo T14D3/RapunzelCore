@@ -31,7 +31,7 @@ public class MaintenanceCommand implements Listener, Command {
                 .executes((executor, args) -> {
                     String state = (String) args.get("state");
                     if (state == null) {
-                        executor.sendMessage(Main.getInstance().getMessage("commands.maintenance.error.invalid", "null"));
+                        executor.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.maintenance.error.invalid", "null"));
                         return Command.SINGLE_SUCCESS;
                     }
 
@@ -49,16 +49,16 @@ public class MaintenanceCommand implements Listener, Command {
                             newState = !maintenanceMode;
                             break;
                         case "status":
-                            executor.sendMessage(Main.getInstance().getMessage("commands.maintenance.status", String.valueOf(maintenanceMode)));
+                            executor.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.maintenance.status", String.valueOf(maintenanceMode)));
                             return Command.SINGLE_SUCCESS;
                         default:
-                            executor.sendMessage(Main.getInstance().getMessage("commands.maintenance.error.invalid", state));
+                            executor.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.maintenance.error.invalid", state));
                             return Command.SINGLE_SUCCESS;
                     }
 
                     maintenanceMode = newState;
 
-                    Bukkit.broadcast(Main.getInstance().getMessage("commands.maintenance." + (newState ? "enabled" : "disabled")));
+                    Bukkit.broadcast(Main.getInstance().getMessageHandler().getMessage("commands.maintenance." + (newState ? "enabled" : "disabled")));
 
                     return Command.SINGLE_SUCCESS;
                 })
@@ -69,7 +69,7 @@ public class MaintenanceCommand implements Listener, Command {
     public void onPlayerLogin(PlayerLoginEvent event) {
         if (!maintenanceMode) return;
         if (event.getPlayer().hasPermission("rapunzelcore.maintenance.bypass")) return;
-        Component kickMessage = Main.getInstance().getMessage("commands.maintenance.kick");
+        Component kickMessage = Main.getInstance().getMessageHandler().getMessage("commands.maintenance.kick");
         event.disallow(PlayerLoginEvent.Result.KICK_OTHER, kickMessage);
     }
 

@@ -1,0 +1,29 @@
+general:
+  # Define custom icons for eg linking items in chat
+  # Careful - if you define an invalid icon, it WILL silently fail and break chat formatting
+  icons:
+    item: "gui:icon/search"
+
+# Channel definitions (format is a MiniMessage format)
+# Valid placeholders:
+#   <player>  - player name
+#   <message> - message
+#   <prefix>  - player's prefix
+#   <suffix>  - player's suffix
+#   <channel> - channel name
+#   <short>   - channel shortcut, or empty if not set
+channels:
+  global:
+    type: global
+    format: '<light_gray><player><gray>: <white><message>'
+    crossServer: false
+  local:
+    type: local
+    format: '<yellow>[Local] <light_gray><player><gray>: <white><message>'
+    range: 200.0
+    crossServer: false
+  staff:
+    type: permission
+    format: chat.staff.format
+    permission: rapunzelcore.staff
+    crossServer: true

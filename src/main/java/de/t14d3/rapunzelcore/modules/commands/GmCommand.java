@@ -45,7 +45,7 @@ public class GmCommand implements Command {
                     String gamemode = (String) args.get("gamemode");
 
                     if (target == null) {
-                        executor.sendMessage(Main.getInstance().getMessage("commands.gm.error.invalid", args.getRaw("player")));
+                        executor.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.gm.error.invalid", args.getRaw("player")));
                         return Command.SINGLE_SUCCESS;
                     }
                     try {
@@ -56,11 +56,11 @@ public class GmCommand implements Command {
                         try {
                             target.setGameMode(GameMode.valueOf(gamemode.toUpperCase()));
                         } catch (IllegalArgumentException e1) {
-                            executor.sendMessage(Main.getInstance().getMessage("commands.gm.error.invalid", gamemode));
+                            executor.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.gm.error.invalid", gamemode));
                             return Command.SINGLE_SUCCESS;
                         }
                     }
-                    Component message = Main.getInstance().getMessage("commands.gm.success",
+                    Component message = Main.getInstance().getMessageHandler().getMessage("commands.gm.success",
                             target.getName(), gamemode);
                     executor.sendMessage(message);
                     return Command.SINGLE_SUCCESS;

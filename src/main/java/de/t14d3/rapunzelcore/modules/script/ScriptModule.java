@@ -16,7 +16,7 @@ public class ScriptModule implements Module {
         if (enabled) return;
 
         // Load or create config
-        config = loadConfig(plugin);
+        config = loadConfig();
 
         scriptManager = new ScriptManager(plugin, this);
         // Register commands that depend on ScriptManager
@@ -36,7 +36,7 @@ public class ScriptModule implements Module {
         CommandAPI.unregister("script");
 
         scriptManager.saveAliases();
-        saveConfig(plugin, config);
+        saveConfig(config);
     }
 
 

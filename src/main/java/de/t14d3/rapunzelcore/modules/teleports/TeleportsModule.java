@@ -16,7 +16,7 @@ public class TeleportsModule implements Module {
         if (enabled) return;
         this.plugin = plugin;
         this.coreDatabase = plugin.getCoreDatabase();
-        this.config = loadConfig(plugin);
+        this.config = loadConfig();
         enabled = true;
 
         registerCommands();

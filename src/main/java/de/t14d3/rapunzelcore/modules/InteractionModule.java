@@ -24,7 +24,7 @@ public class InteractionModule implements Module {
         enabled = true;
 
         // Load config
-        config = loadConfig(plugin);
+        config = loadConfig();
         loadInteractions();
 
         // Register listener
@@ -35,7 +35,7 @@ public class InteractionModule implements Module {
     public void disable(Main plugin) {
         if (!enabled) return;
         enabled = false;
-        saveConfig(plugin, config);
+        saveConfig(config);
     }
 
     @Override

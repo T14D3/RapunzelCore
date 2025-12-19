@@ -14,6 +14,7 @@ public class AnvilCommand implements Command {
                 .withPermission("rapunzelcore.anvil")
                 .executes((executor, args) -> {
                     Player player = (Player) executor;
+                    // noinspection UnstableApiUsage
                     MenuType.Typed.ANVIL.builder().build(player).open();
                     return Command.SINGLE_SUCCESS;
                 })

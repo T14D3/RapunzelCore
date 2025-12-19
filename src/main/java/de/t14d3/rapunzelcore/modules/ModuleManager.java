@@ -60,4 +60,13 @@ public class ModuleManager {
     public static List<Module> getModules() {
         return modules;
     }
+
+    public static <T extends Module> T getModule(Class<T> clazz) {
+        for (Module module : modules) {
+            if (clazz.isInstance(module)) {
+                return clazz.cast(module);
+            }
+        }
+        throw new IllegalArgumentException("Module not found");
+    }
 }

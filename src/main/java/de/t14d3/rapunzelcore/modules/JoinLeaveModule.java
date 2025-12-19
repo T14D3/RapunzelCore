@@ -27,7 +27,7 @@ public class JoinLeaveModule implements Module {
         enabled = true;
 
         // Load config
-        config = loadConfig(plugin);
+        config = loadConfig();
         loadMessages();
 
         // Register listener
@@ -39,7 +39,7 @@ public class JoinLeaveModule implements Module {
         if (!enabled) return;
         enabled = false;
         saveMessages();
-        saveConfig(plugin, config);
+        saveConfig(config);
     }
 
     @Override

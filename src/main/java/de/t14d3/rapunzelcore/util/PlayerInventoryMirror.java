@@ -332,7 +332,7 @@ public class PlayerInventoryMirror {
             closeMirror(this.viewer, this.target);
             // Notify viewer if they are still online
             if (this.viewer.isOnline()) {
-                this.viewer.sendMessage(Main.getInstance().getMessage("commands.invsee.error.target_offline", this.target.getName()));
+                this.viewer.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.invsee.error.target_offline", this.target.getName()));
             }
         }
     }
@@ -398,7 +398,7 @@ public class PlayerInventoryMirror {
             syncTask.cancel();
         }
         activeMirrors.remove(viewerPlayer.getUniqueId());
-        viewerPlayer.sendMessage(Main.getInstance().getMessage("commands.invsee.closed", targetPlayer.getName()));
+        viewerPlayer.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.invsee.closed", targetPlayer.getName()));
     }
 
     /**

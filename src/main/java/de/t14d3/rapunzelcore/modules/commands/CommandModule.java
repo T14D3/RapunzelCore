@@ -23,7 +23,7 @@ public class CommandModule implements Module {
         if (enabled) return;
         enabled = true;
 
-        config = loadConfig(plugin);
+        config = loadConfig();
 
         Set<Class<? extends Command>> commands = ReflectionsUtil.getSubTypes(Command.class);
         commands.forEach(clazz -> {

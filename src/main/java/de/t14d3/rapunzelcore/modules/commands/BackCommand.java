@@ -30,12 +30,13 @@ public class BackCommand implements Listener, Command {
                     }
                     if (target == null) {
                         player.sendMessage(
-                                Main.getInstance().getMessage("commands.back.error.no_location")
+                                Main.getInstance().getMessageHandler().getMessage("commands.back.error.no_location")
                         );
                         return Command.SINGLE_SUCCESS;
                     }
                     player.teleport(target);
                     Component message = Main.getInstance()
+                            .getMessageHandler()
                             .getMessage("commands.back.success")
                             .color(NamedTextColor.GREEN);
                     player.sendMessage(message);

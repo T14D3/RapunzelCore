@@ -25,7 +25,7 @@ public class PlaytimeCommand implements Command {
                     int ticks = target.getStatistic(Statistic.PLAY_ONE_MINUTE);
                     long seconds = ticks / 20L;
                     String formattedTime = formatPlaytime(seconds);
-                    executor.sendMessage(plugin.getMessage("commands.playtime.success", target.getName(), formattedTime));
+                    executor.sendMessage(plugin.getMessageHandler().getMessage("commands.playtime.success", target.getName(), formattedTime));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);

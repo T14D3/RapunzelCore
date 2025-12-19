@@ -5,6 +5,8 @@ import de.t14d3.spool.repository.EntityRepository;
 
 import java.util.Map;
 
+import static de.t14d3.rapunzelcore.database.CoreDatabase.flushAsync;
+
 public class PlayerRepository extends EntityRepository<Player> {
     private static final PlayerRepository instance = new PlayerRepository();
     public PlayerRepository() {
@@ -21,7 +23,7 @@ public class PlayerRepository extends EntityRepository<Player> {
             player = new Player();
             player.setUuid(bplayer.getUniqueId());
             instance.save(player);
-            instance.entityManager.flush();
+            flushAsync();
         }
         return player;
     }

@@ -28,7 +28,7 @@ public class FlyCommand implements Command {
                     Player sender = (Player) executor;
                     Player target = args.get("player") == null ? sender : (Player) args.get("player");
                     if (target == null) {
-                        sender.sendMessage(Main.getInstance().getMessage("commands.fly.error.invalid"));
+                        sender.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.fly.error.invalid"));
                         return Command.SINGLE_SUCCESS;
                     }
                     boolean enabled = target.getAllowFlight();
@@ -41,7 +41,7 @@ public class FlyCommand implements Command {
                             target.setFlying(true);
                         }
                     }
-                    Component message = Main.getInstance().getMessage("commands.fly.toggle",
+                    Component message = Main.getInstance().getMessageHandler().getMessage("commands.fly.toggle",
                             target.getName(), !enabled ? "enabled" : "disabled");
                     sender.sendMessage(message);
                     return Command.SINGLE_SUCCESS;

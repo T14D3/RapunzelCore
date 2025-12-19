@@ -48,7 +48,7 @@ public class RepairCommand implements Command {
                             }
                             break;
                     }
-                    executor.sendMessage(Main.getInstance().getMessage("commands.repair.success", type, target.getName()));
+                    executor.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.repair.success", type, target.getName()));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(Main.getInstance());

@@ -27,12 +27,12 @@ public class MessageHandler {
         cachedMessages.clear();
         File messagesFile = new File(plugin.getDataFolder(), "messages.properties");
         Properties messagesConfig = new Properties();
-        updateMessages(messagesConfig);
         try {
             messagesConfig.load(new FileInputStream(messagesFile));
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to load messages.properties: " + e.getMessage());
         }
+        updateMessages(messagesConfig);
         messagesConfig.keySet().forEach(key -> {
             String raw = messagesConfig.getProperty(key.toString());
             rawMessages.put(key.toString(), raw);
@@ -106,5 +106,7 @@ public class MessageHandler {
         return mm.deserialize(raw, resolvers);
     }
 
-
+    public String getRaw(String key) {
+        return rawMessages.get(key);
+    }
 }

@@ -54,11 +54,11 @@ public class HomeCommands implements Command {
                     player.sendMessage(String.valueOf(HomesRepository.getInstance().findAll().size()));
                     Location homeLocation = HomesRepository.getHomeLocation(player, homeName);
                     if (homeLocation == null) {
-                        player.sendMessage(plugin.getMessage("teleports.home.error.no_home", homeName));
+                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.home.error.no_home", homeName));
                         return Command.SINGLE_SUCCESS;
                     }
                     player.teleport(homeLocation);
-                    player.sendMessage(plugin.getMessage("teleports.home.success", homeName));
+                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.home.success", homeName));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
@@ -81,7 +81,7 @@ public class HomeCommands implements Command {
                     // If not updating, check if they can set more homes
                     if (!isUpdating && !canSetMoreHomes(player)) {
                         int maxHomes = getMaxHomes(player);
-                        player.sendMessage(plugin.getMessage("teleports.sethome.error.limit_reached", 
+                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.sethome.error.limit_reached", 
                                 String.valueOf(maxHomes)).color(NamedTextColor.RED));
                         return Command.SINGLE_SUCCESS;
                     }
@@ -89,18 +89,18 @@ public class HomeCommands implements Command {
                     HomesRepository.setHome(player, homeName, player.getLocation());
                     
                     if (isUpdating) {
-                        player.sendMessage(plugin.getMessage("teleports.sethome.updated", homeName).color(NamedTextColor.YELLOW));
+                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.sethome.updated", homeName).color(NamedTextColor.YELLOW));
                     } else {
-                        player.sendMessage(plugin.getMessage("teleports.sethome.success", homeName).color(NamedTextColor.GREEN));
+                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.sethome.success", homeName).color(NamedTextColor.GREEN));
                         
                         // Show remaining homes if not unlimited
                         if (!player.hasPermission("rapunzelcore.homes.unlimited")) {
                             int remaining = getMaxHomes(player) - HomesRepository.getHomes(player).size();
                             if (remaining == 0) {
-                                player.sendMessage(plugin.getMessage("teleports.sethome.limit_reached")
+                                player.sendMessage(plugin.getMessageHandler().getMessage("teleports.sethome.limit_reached")
                                         .color(NamedTextColor.GOLD));
                             } else {
-                                player.sendMessage(plugin.getMessage("teleports.sethome.remaining", 
+                                player.sendMessage(plugin.getMessageHandler().getMessage("teleports.sethome.remaining", 
                                         String.valueOf(remaining)).color(NamedTextColor.GRAY));
                             }
                         }
@@ -123,11 +123,11 @@ public class HomeCommands implements Command {
                     }
                     Location homeLocation = HomesRepository.getHomeLocation(player, homeName);
                     if (homeLocation == null) {
-                        player.sendMessage(plugin.getMessage("teleports.delhome.error.no_home", homeName));
+                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.delhome.error.no_home", homeName));
                         return Command.SINGLE_SUCCESS;
                     }
                     HomesRepository.deleteHome(player, homeName);
-                    player.sendMessage(plugin.getMessage("teleports.delhome.success", homeName));
+                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.delhome.success", homeName));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
@@ -140,13 +140,13 @@ public class HomeCommands implements Command {
                     Player player = (Player) executor;
                     List<Home> homes = HomesRepository.getHomes(player);
                     if (homes.isEmpty()) {
-                        player.sendMessage(plugin.getMessage("teleports.homes.error.none"));
+                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.homes.error.none"));
                         return Command.SINGLE_SUCCESS;
                     }
-                    Component message = plugin.getMessage("teleports.homes.header");
+                    Component message = plugin.getMessageHandler().getMessage("teleports.homes.header");
                     for (Home home : homes) {
                         Location loc = home.getLocation();
-                        message = message.appendNewline().append(plugin.getMessage("teleports.homes.entry",
+                        message = message.appendNewline().append(plugin.getMessageHandler().getMessage("teleports.homes.entry",
                                 home.getName(),
                                 String.valueOf(loc.getBlockX()),
                                 String.valueOf(loc.getBlockY()),

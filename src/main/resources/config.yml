@@ -13,6 +13,7 @@ modules:
   teamchat: true
   commands: true
   teleports: true
+  chat: true
 
 # Database configuration
 database:

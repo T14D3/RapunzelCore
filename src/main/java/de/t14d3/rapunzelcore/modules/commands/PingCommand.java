@@ -26,11 +26,11 @@ public class PingCommand implements Command {
                     Player target = args.get("player") == null ? sender : (Player) args.get("player");
 
                     if (target == null) {
-                        sender.sendMessage(Main.getInstance().getMessage("commands.ping.error.invalid", args.getRaw("player")));
+                        sender.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.ping.error.invalid", args.getRaw("player")));
                         return Command.SINGLE_SUCCESS;
                     }
 
-                    sender.sendMessage(Main.getInstance().getMessage("commands.ping.success", String.valueOf(target.getPing())));
+                    sender.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.ping.success", String.valueOf(target.getPing())));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(Main.getInstance());

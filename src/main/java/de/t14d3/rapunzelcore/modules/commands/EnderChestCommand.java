@@ -40,7 +40,7 @@ public class EnderChestCommand implements Command {
 
                     // Permission check for viewing others' enderchest
                     if (!sender.equals(target) && !sender.hasPermission("rapunzelcore.enderchest.others")) {
-                        sender.sendMessage(Main.getInstance().getMessage("commands.enderchest.error.permission"));
+                        sender.sendMessage(Main.getInstance().getMessageHandler().getMessage("commands.enderchest.error.permission"));
                         return Command.SINGLE_SUCCESS;
                     }
 

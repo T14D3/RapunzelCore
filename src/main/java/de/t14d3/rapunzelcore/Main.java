@@ -21,6 +21,8 @@ public final class Main extends JavaPlugin {
     private static Main instance;
     private CoreDatabase coreDatabase;
 
+    public static final boolean DEBUG = true;
+
     @Override
     public void onEnable() {
         CommandAPI.onEnable();
@@ -64,32 +66,12 @@ public final class Main extends JavaPlugin {
         // Plugin shutdown logic
     }
 
-    public MessageHandler getMessages() {
+    public MessageHandler getMessageHandler() {
         return messages;
-    }
-
-    public Component getMessage(String key) {
-        return messages.getMessage(key);
-    }
-
-    public Component getMessage(String key, String... args) {
-        return messages.getMessage(key, args);
     }
 
     public static Main getInstance() {
         return instance;
-    }
-
-    public Location getSpawn(World world) {
-        Location spawn = WarpsRepository.getSpawn(world.getName());
-        if (spawn == null) {
-            spawn = world.getSpawnLocation();
-        }
-        return spawn;
-    }
-
-    public void setSpawn(World world, Location location) {
-        WarpsRepository.setSpawn(world.getName(), location);
     }
 
     public CoreDatabase getCoreDatabase() {
@@ -129,6 +111,9 @@ public final class Main extends JavaPlugin {
                 ModuleManager.register(module);
             } catch (Exception e) {
                 getLogger().warning("Failed to load module " + clazz.getName() + ": " + e.getMessage());
+                if (DEBUG) {
+                    e.printStackTrace();
+                }
             }
         });
     }

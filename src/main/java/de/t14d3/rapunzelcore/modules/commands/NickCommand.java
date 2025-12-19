@@ -30,17 +30,17 @@ public class NickCommand implements Command {
                     Player sender = (Player) executor;
 
                     if (target == null) {
-                        sender.sendMessage(plugin.getMessage("commands.error.invalid", args.getRaw("target")));
+                        sender.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
                         return Command.SINGLE_SUCCESS;
                     }
                     String nickname = (String) args.get("nickname");
 
                     if (nickname.equalsIgnoreCase("off") || nickname.equalsIgnoreCase("reset")) {
                         target.displayName(target.name());
-                        sender.sendMessage(plugin.getMessage("commands.nick.reset", target.getName()));
+                        sender.sendMessage(plugin.getMessageHandler().getMessage("commands.nick.reset", target.getName()));
                     } else {
                         target.displayName(Component.text(nickname));
-                        sender.sendMessage(plugin.getMessage("commands.nick.set", target.getName(), nickname));
+                        sender.sendMessage(plugin.getMessageHandler().getMessage("commands.nick.set", target.getName(), nickname));
                     }
                     return Command.SINGLE_SUCCESS;
                 })

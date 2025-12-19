@@ -30,24 +30,24 @@ public class UInfoCommand implements Command {
                     future.thenAccept(profiles -> {
                         PlayerProfile profile = profiles.getFirst();
                         if (profile == null || profile.getId() == null) {
-                            sender.sendMessage(main.getMessage("commands.uinfo.error.invalid", args.getRaw("player")));
+                            sender.sendMessage(main.getMessageHandler().getMessage("commands.uinfo.error.invalid", args.getRaw("player")));
                             return;
                         }
                         OfflinePlayer target = Bukkit.getOfflinePlayer(profile.getId());
 
                         List<Component> lines = new ArrayList<>();
 
-                        lines.add(main.getMessage("commands.uinfo.player", target.getName()));
-                        lines.add(main.getMessage("commands.uinfo.uuid", target.getUniqueId().toString()));
+                        lines.add(main.getMessageHandler().getMessage("commands.uinfo.player", target.getName()));
+                        lines.add(main.getMessageHandler().getMessage("commands.uinfo.uuid", target.getUniqueId().toString()));
 
                         if (target.hasPlayedBefore()) {
                             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                             String firstPlayed = sdf.format(new Date(target.getFirstPlayed()));
                             String lastPlayed  = sdf.format(new Date(target.getLastSeen()));
 
-                            lines.add(main.getMessage("commands.uinfo.firstplayed", firstPlayed));
-                            lines.add(main.getMessage("commands.uinfo.lastseen", lastPlayed));
-                            lines.add(main.getMessage(
+                            lines.add(main.getMessageHandler().getMessage("commands.uinfo.firstplayed", firstPlayed));
+                            lines.add(main.getMessageHandler().getMessage("commands.uinfo.lastseen", lastPlayed));
+                            lines.add(main.getMessageHandler().getMessage(
                                     "commands.uinfo.location",
                                     String.valueOf(target.getLocation().getBlockX()),
                                     String.valueOf(target.getLocation().getBlockY()),
@@ -56,12 +56,12 @@ public class UInfoCommand implements Command {
                         }
 
                         if (target.isOnline() && target instanceof Player player) {
-                            lines.add(main.getMessage("commands.uinfo.gamemode", player.getGameMode().toString()));
-                            lines.add(main.getMessage("commands.uinfo.health", String.valueOf(player.getHealth()), String.valueOf(player.getMaxHealth())));
-                            lines.add(main.getMessage("commands.uinfo.food", String.valueOf(player.getFoodLevel())));
-                            lines.add(main.getMessage("commands.uinfo.saturation", String.valueOf(player.getSaturation())));
-                            lines.add(main.getMessage("commands.uinfo.level", String.valueOf(player.getLevel())));
-                            lines.add(main.getMessage("commands.uinfo.world", player.getWorld().getName()));
+                            lines.add(main.getMessageHandler().getMessage("commands.uinfo.gamemode", player.getGameMode().toString()));
+                            lines.add(main.getMessageHandler().getMessage("commands.uinfo.health", String.valueOf(player.getHealth()), String.valueOf(player.getMaxHealth())));
+                            lines.add(main.getMessageHandler().getMessage("commands.uinfo.food", String.valueOf(player.getFoodLevel())));
+                            lines.add(main.getMessageHandler().getMessage("commands.uinfo.saturation", String.valueOf(player.getSaturation())));
+                            lines.add(main.getMessageHandler().getMessage("commands.uinfo.level", String.valueOf(player.getLevel())));
+                            lines.add(main.getMessageHandler().getMessage("commands.uinfo.world", player.getWorld().getName()));
                         }
 
                         Component message = Component.join(

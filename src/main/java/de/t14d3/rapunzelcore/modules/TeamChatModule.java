@@ -55,7 +55,7 @@ public class TeamChatModule implements Module {
                         Set<Player> recipients = Bukkit.getOnlinePlayers().stream()
                                 .filter(player -> player.hasPermission("rapunzelcore.teamchat.see"))
                                 .collect(Collectors.toSet());
-                        Component message = Main.getInstance().getMessage("commands.teamchat.format.sender",
+                        Component message = Main.getInstance().getMessageHandler().getMessage("commands.teamchat.format.sender",
                                 sender.getName(), raw);
                         recipients.forEach(player -> {
                             player.sendMessage(message);

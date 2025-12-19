@@ -1,14 +1,21 @@
 package de.t14d3.rapunzelcore.modules.teleports;
 
+import com.destroystokyo.paper.profile.PlayerProfile;
 import com.mojang.brigadier.Command;
 import de.t14d3.rapunzelcore.Main;
+import de.t14d3.rapunzelcore.util.Utils;
 import dev.jorel.commandapi.CommandAPICommand;
+import dev.jorel.commandapi.arguments.AsyncPlayerProfileArgument;
 import dev.jorel.commandapi.arguments.EntitySelectorArgument;
 import dev.jorel.commandapi.arguments.StringArgument;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class TpaCommands {
     private final Main plugin;
@@ -20,8 +27,6 @@ public class TpaCommands {
     }
 
     public void register() {
-        // Schedule cleanup task
-        Bukkit.getScheduler().runTaskTimer(plugin, tpaManager::cleanup, 6000L, 6000L); // Run every 5 minutes
 
         // tpa command - Request to teleport to a player
         new CommandAPICommand("tpa")
@@ -31,23 +36,23 @@ public class TpaCommands {
                 .executesPlayer((player, args) -> {
                     Player target = (Player) args.get("target");
                     if (target == null) {
-                        player.sendMessage(plugin.getMessage("error.player_not_found"));
+                        player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
                         return Command.SINGLE_SUCCESS;
                     }
 
                     if (target.getUniqueId().equals(player.getUniqueId())) {
-                        player.sendMessage(plugin.getMessage("teleports.tpa.error.self"));
+                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpa.error.self"));
                         return Command.SINGLE_SUCCESS;
                     }
 
                     if (tpaManager.isToggled(target)) {
-                        player.sendMessage(plugin.getMessage("teleports.tpa.error.toggled", target.getName()));
+                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpa.error.toggled", target.getName()));
                         return Command.SINGLE_SUCCESS;
                     }
 
                     tpaManager.createRequest(player, target, false);
-                    player.sendMessage(plugin.getMessage("teleports.tpa.sent", target.getName()));
-                    target.sendMessage(plugin.getMessage("teleports.tpa.received", player.getName()));
+                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpa.sent", target.getName()));
+                    target.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpa.received", player.getName()));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
@@ -60,69 +65,107 @@ public class TpaCommands {
                 .executesPlayer((player, args) -> {
                     Player target = (Player) args.get("target");
                     if (target == null) {
-                        player.sendMessage(plugin.getMessage("error.player_not_found"));
+                        player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
                         return Command.SINGLE_SUCCESS;
                     }
 
                     if (target.getUniqueId().equals(player.getUniqueId())) {
-                        player.sendMessage(plugin.getMessage("teleports.tpa.error.self"));
+                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpa.error.self"));
                         return Command.SINGLE_SUCCESS;
                     }
 
                     if (tpaManager.isToggled(target)) {
-                        player.sendMessage(plugin.getMessage("teleports.tpa.error.toggled", target.getName()));
+                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpa.error.toggled", target.getName()));
                         return Command.SINGLE_SUCCESS;
                     }
 
                     tpaManager.createRequest(player, target, true);
-                    player.sendMessage(plugin.getMessage("teleports.tpahere.sent", target.getName()));
-                    target.sendMessage(plugin.getMessage("teleports.tpahere.received", player.getName()));
+                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpahere.sent", target.getName()));
+                    target.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpahere.received", player.getName()));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
 
         // tpaccept command - Accept a teleport request
         new CommandAPICommand("tpaccept")
+                .withOptionalArguments(new StringArgument("requester"))
                 .withFullDescription("Accept a teleport request")
                 .withPermission("rapunzelcore.tpaccept")
                 .executesPlayer((player, args) -> {
-                    TpaRequest request = tpaManager.getRequest(player);
+                    String requesterName = (String) args.getOptional("requester").orElse(null);
+                    TpaRequest request = tpaManager.getRequest(player, requesterName);
+
                     if (request == null) {
-                        player.sendMessage(plugin.getMessage("teleports.tpaccept.error.no_request"));
+                        if (requesterName != null) {
+                            player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpaccept.error.no_request_from", requesterName));
+                        } else {
+                            List<TpaRequest> requests = tpaManager.getRequests(player);
+                            if (requests == null || requests.isEmpty()) {
+                                player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpaccept.error.no_request"));
+                            } else {
+                                // Multiple requests, list them
+                                player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpaccept.error.multiple_requests"));
+                                for (TpaRequest req : requests) {
+                                    Player reqPlayer = req.getRequester();
+                                    if (reqPlayer != null) {
+                                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpaccept.list_entry", reqPlayer.getName()));
+                                    }
+                                }
+                            }
+                        }
                         return Command.SINGLE_SUCCESS;
                     }
 
                     Player requester = request.getRequester();
                     if (requester == null || !requester.isOnline()) {
-                        player.sendMessage(plugin.getMessage("error.player_offline"));
-                        tpaManager.removeRequest(player);
+                        player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.offline"));
+                        tpaManager.removeRequest(player, requesterName);
                         return Command.SINGLE_SUCCESS;
                     }
 
-                    request.teleport(player.getUniqueId());
-                    tpaManager.removeRequest(player);
-                    player.sendMessage(plugin.getMessage("teleports.tpaccept.accepted", requester.getName()));
-                    requester.sendMessage(plugin.getMessage("teleports.tpaccept.accepted_by", player.getName()));
+                    request.teleport();
+                    tpaManager.removeRequest(player, requesterName);
+                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpaccept.accepted", requester.getName()));
+                    requester.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpaccept.accepted_by", player.getName()));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
 
         // tpdeny command - Deny a teleport request
         new CommandAPICommand("tpdeny")
+                .withOptionalArguments(new StringArgument("requester"))
                 .withFullDescription("Deny a teleport request")
                 .withPermission("rapunzelcore.tpdeny")
                 .executesPlayer((player, args) -> {
-                    TpaRequest request = tpaManager.removeRequest(player);
+                    String requesterName = (String) args.getOptional("requester").orElse(null);
+                    TpaRequest request = tpaManager.removeRequest(player, requesterName);
+
                     if (request == null) {
-                        player.sendMessage(plugin.getMessage("teleports.tpdeny.error.no_request"));
+                        if (requesterName != null) {
+                            player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpdeny.error.no_request_from", requesterName));
+                        } else {
+                            List<TpaRequest> requests = tpaManager.getRequests(player);
+                            if (requests == null || requests.isEmpty()) {
+                                player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpdeny.error.no_request"));
+                            } else {
+                                // Multiple requests, list them
+                                player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpdeny.error.multiple_requests"));
+                                for (TpaRequest req : requests) {
+                                    Player reqPlayer = req.getRequester();
+                                    if (reqPlayer != null) {
+                                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpdeny.list_entry", reqPlayer.getName()));
+                                    }
+                                }
+                            }
+                        }
                         return Command.SINGLE_SUCCESS;
                     }
 
                     Player requester = request.getRequester();
                     if (requester != null && requester.isOnline()) {
-                        requester.sendMessage(plugin.getMessage("teleports.tpdeny.denied", player.getName()));
+                        requester.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpdeny.denied", player.getName()));
                     }
-                    player.sendMessage(plugin.getMessage("teleports.tpdeny.denied_request", requester != null ? requester.getName() : "Unknown"));
+                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpdeny.denied_request", requester != null ? requester.getName() : "Unknown"));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
@@ -135,9 +178,9 @@ public class TpaCommands {
                     boolean toggled = !tpaManager.isToggled(player);
                     tpaManager.setToggled(player, toggled);
                     Component status = toggled ? 
-                        plugin.getMessage("general.toggle.on") : 
-                        plugin.getMessage("general.toggle.off");
-                    player.sendMessage(plugin.getMessages().getMessage("teleports.tptoggle.toggled", status));
+                        plugin.getMessageHandler().getMessage("general.toggle.on") : 
+                        plugin.getMessageHandler().getMessage("general.toggle.off");
+                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tptoggle.toggled", status));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
@@ -150,84 +193,96 @@ public class TpaCommands {
                 .executesPlayer((player, args) -> {
                     Player target = (Player) args.get("target");
                     if (target == null) {
-                        player.sendMessage(plugin.getMessage("error.player_not_found"));
+                        player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
                         return Command.SINGLE_SUCCESS;
                     }
 
                     target.teleport(player.getLocation());
-                    player.sendMessage(plugin.getMessage("teleports.tphere.success", target.getName()));
-                    target.sendMessage(plugin.getMessage("teleports.tphere.teleported_by", player.getName()));
+                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tphere.success", target.getName()));
+                    target.sendMessage(plugin.getMessageHandler().getMessage("teleports.tphere.teleported_by", player.getName()));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
 
         // tpo command (admin) - Teleport to a player (supports offline players)
+        AsyncPlayerProfileArgument asyncPlayerProfileArgument = new AsyncPlayerProfileArgument("target");
         new CommandAPICommand("tpo")
-                .withArguments(new StringArgument("target"))
+                .withArguments(asyncPlayerProfileArgument)
                 .withFullDescription("Teleport to a player (supports offline players)")
                 .withPermission("rapunzelcore.tpo")
                 .executesPlayer((player, args) -> {
-                    String targetName = (String) args.get("target");
-                    
-                    // Try to get online player first
-                    Player onlineTarget = Bukkit.getPlayer(targetName);
-                    if (onlineTarget != null) {
-                        player.teleport(onlineTarget.getLocation());
-                        player.sendMessage(plugin.getMessage("teleports.tpo.success", onlineTarget.getName()));
+                    CompletableFuture<List<PlayerProfile>> profileList = args.getByArgument(asyncPlayerProfileArgument);
+                    if (profileList == null) {
+                        player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
                         return Command.SINGLE_SUCCESS;
                     }
-                    
-                    // Handle offline player
-                    OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(targetName);
-                    if (!offlineTarget.hasPlayedBefore()) {
-                        player.sendMessage(plugin.getMessage("error.player_not_found"));
-                        return Command.SINGLE_SUCCESS;
-                    }
-                    
-                    // Check if offline player has a bed spawn location
-                    org.bukkit.Location bedSpawn = offlineTarget.getBedSpawnLocation();
-                    if (bedSpawn != null) {
-                        player.teleport(bedSpawn);
-                        player.sendMessage(plugin.getMessage("teleports.tpo.success_offline", targetName));
-                        return Command.SINGLE_SUCCESS;
-                    }
-                    
-                    // Fallback to world spawn
-                    org.bukkit.Location worldSpawn = offlineTarget.getLocation() != null ? 
-                        offlineTarget.getLocation() : 
-                        Bukkit.getWorlds().get(0).getSpawnLocation();
-                    
-                    player.teleport(worldSpawn);
-                    player.sendMessage(plugin.getMessage("teleports.tpo.success_offline", targetName));
+                    profileList.thenAccept(profiles -> {
+                        if (profiles.isEmpty()) {
+                            player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid"));
+                            return;
+                        }
+                        PlayerProfile profile = profiles.getFirst();
+                        if (profile == null || profile.getId() == null) {
+                            player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid"));
+                            return;
+                        }
+                        OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(profile.getId());
+                        if (!offlineTarget.hasPlayedBefore()) {
+                            player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid"));
+                            return;
+                        }
+
+                        Location location = offlineTarget.getLocation();
+                        if (location != null) {
+                            player.teleport(location);
+                            player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpo.success", profile.getName()));
+                        }
+
+                    }).exceptionally(e -> {
+                        player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid"));
+                        return null;
+                    });
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
 
         // tpohere command (admin) - Teleport a player to you (supports offline players)
         new CommandAPICommand("tpohere")
-                .withArguments(new StringArgument("target"))
+                .withArguments(asyncPlayerProfileArgument)
                 .withFullDescription("Teleport a player to you (supports offline players)")
                 .withPermission("rapunzelcore.tpohere")
                 .executesPlayer((player, args) -> {
-                    String targetName = (String) args.get("target");
-                    
-                    // Try to get online player first
-                    Player onlineTarget = Bukkit.getPlayer(targetName);
-                    if (onlineTarget != null) {
-                        onlineTarget.teleport(player.getLocation());
-                        player.sendMessage(plugin.getMessage("teleports.tpohere.success", onlineTarget.getName()));
-                        onlineTarget.sendMessage(plugin.getMessage("teleports.tpohere.teleported_by", player.getName()));
+                    CompletableFuture<List<PlayerProfile>> profileList = args.getByArgument(asyncPlayerProfileArgument);
+                    if (profileList == null) {
+                        player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
                         return Command.SINGLE_SUCCESS;
                     }
-                    
-                    // Handle offline player - cannot teleport offline players, but show message
-                    OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(targetName);
-                    if (!offlineTarget.hasPlayedBefore()) {
-                        player.sendMessage(plugin.getMessage("error.player_not_found"));
-                        return Command.SINGLE_SUCCESS;
-                    }
-                    
-                    player.sendMessage(plugin.getMessage("teleports.tpohere.error.offline", targetName));
+                    profileList.thenAccept(profiles -> {
+                        if (profiles.isEmpty()) {
+                            player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
+                            return;
+                        }
+                        PlayerProfile profile = profiles.getFirst();
+                        if (profile == null || profile.getId() == null) {
+                            player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
+                            return;
+                        }
+                        OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(profile.getId());
+                        if (!offlineTarget.hasPlayedBefore()) {
+                            player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
+                            return;
+                        }
+                        if (offlineTarget.getPlayer() != null) {
+                            offlineTarget.getPlayer().teleport(player.getLocation());
+                        } else {
+                            Utils.setOfflineLocation(profile, player.getLocation());
+                        }
+                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpohere.success", profile.getName()));
+                    }).exceptionally(e -> {
+                        player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
+                        plugin.getLogger().warning("Failed to teleport player to offline location: " + e.getCause().getMessage());
+                        return null;
+                    });
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
