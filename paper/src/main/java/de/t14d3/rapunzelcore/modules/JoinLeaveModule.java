@@ -1,0 +1,123 @@
+package de.t14d3.rapunzelcore.modules;
+
+import de.t14d3.rapunzelcore.Environment;
+import de.t14d3.rapunzelcore.Module;
+import de.t14d3.rapunzelcore.RapunzelCore;
+import de.t14d3.rapunzelcore.RapunzelPaperCore;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.simpleyaml.configuration.file.FileConfiguration;
+
+import static net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.parsed;
+
+public class JoinLeaveModule implements Module {
+    private boolean enabled = false;
+    private RapunzelPaperCore plugin;
+    private String joinMessage;
+    private String leaveMessage;
+    private final MiniMessage miniMessage = MiniMessage.miniMessage();
+
+    @Override
+    public Environment getEnvironment() {
+        return Environment.PAPER;
+    }
+
+    @Override
+    public void enable(RapunzelCore core, Environment environment) {
+        if (enabled) return;
+        this.plugin = (RapunzelPaperCore) core;
+        enabled = true;
+
+        // Load config
+        loadConfig();
+        loadMessages();
+
+        // Register listener
+        this.plugin.getServer().getPluginManager().registerEvents(new JoinLeaveListener(this), this.plugin);
+    }
+
+    @Override
+    public void disable(RapunzelCore core, Environment environment) {
+        if (!enabled) return;
+        enabled = false;
+        saveMessages();
+    }
+
+    @Override
+    public String getName() {
+        return "joinleave";
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void sendJoinMessage(Player player) {
+        if (joinMessage != null && !joinMessage.trim().isEmpty()) {
+            Component message = miniMessage.deserialize(joinMessage, parsed("player", player.getName()));
+            plugin.getServer().broadcast(message);
+        }
+    }
+
+    public void sendLeaveMessage(Player player) {
+        if (leaveMessage != null && !leaveMessage.trim().isEmpty()) {
+            Component message = miniMessage.deserialize(leaveMessage, parsed("player", player.getName()));
+            plugin.getServer().broadcast(message);
+        }
+    }
+
+    public void setJoinMessage(String message) {
+        joinMessage = message != null ? message.trim() : "";
+        FileConfiguration config = loadConfig();
+        config.set("join-message", joinMessage);
+        saveConfig(config);
+    }
+
+    public void setLeaveMessage(String message) {
+        leaveMessage = message != null ? message.trim() : "";
+        FileConfiguration config = loadConfig();
+        config.set("leave-message", leaveMessage);
+        saveConfig(config);
+    }
+
+    private void loadMessages() {
+        FileConfiguration config = loadConfig();
+        joinMessage = config.getString("join-message", "");
+        leaveMessage = config.getString("leave-message", "");
+    }
+
+    private void saveMessages() {
+        FileConfiguration config = loadConfig();
+        config.set("join-message", joinMessage);
+        config.set("leave-message", leaveMessage);
+        saveConfig(config);
+    }
+
+    private static class JoinLeaveListener implements Listener {
+        private final JoinLeaveModule module;
+
+        public JoinLeaveListener(JoinLeaveModule module) {
+            this.module = module;
+        }
+
+        @EventHandler
+        public void onPlayerJoin(PlayerJoinEvent event) {
+            // Suppress default join message
+            event.joinMessage(null);
+            module.sendJoinMessage(event.getPlayer());
+        }
+
+        @EventHandler
+        public void onPlayerQuit(PlayerQuitEvent event) {
+            // Suppress default quit message
+            event.quitMessage(null);
+            module.sendLeaveMessage(event.getPlayer());
+        }
+    }
+}

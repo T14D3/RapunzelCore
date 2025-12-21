@@ -3,6 +3,9 @@
   <component name="EntryPointsManager">
     <pattern value="de.t14d3.rapunzelcore.modules.Module" hierarchically="true" />
     <pattern value="de.t14d3.rapunzelcore.modules.commands.Command" hierarchically="true" />
+    <writeAnnotations>
+      <writeAnnotation name="de.t14d3.spool.annotations.OneToMany" />
+    </writeAnnotations>
   </component>
   <component name="ExternalStorageConfigurationManager" enabled="true" />
   <component name="ProjectRootManager" version="2" project-jdk-name="graalvm-ce-24" project-jdk-type="JavaSDK">

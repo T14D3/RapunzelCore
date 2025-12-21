@@ -1,134 +1,180 @@
-import java.util.Properties
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
+    id("base")
     id("java")
-    id("xyz.jpenilla.run-paper") version "2.3.1"
     id("com.gradleup.shadow") version "9.0.0-beta8"
-    id("io.papermc.paperweight.userdev") version "2.0.0-beta.19"
+    id("xyz.jpenilla.run-paper") version "2.0.1"
 }
 
-group = "de.t14d3"
+group = "de.t14d3.rapunzelcore"
 version = "0.0.1"
 
 repositories {
     mavenCentral()
-    maven {
-        name = "papermc-repo"
-        url = uri("https://repo.papermc.io/repository/maven-public/")
-    }
-    maven {
-        name = "sonatype"
-        url = uri("https://oss.sonatype.org/content/groups/public/")
-    }
-    maven {
-        name = "Central Portal Snapshots"
-        url = uri("https://central.sonatype.com/repository/maven-snapshots/")
-        // Only search this repository for the specific dependency
-        content {
-            includeModule("dev.jorel", "commandapi")
-        }
-    }
-    maven { url = uri("https://jitpack.io") }
+    maven("https://repo.papermc.io/repository/maven-public/")
+
+    maven("https://jitpack.io")
 }
 
-dependencies {
-    paperweight.paperDevBundle("1.21.10-R0.1-SNAPSHOT")
-    implementation("dev.jorel:commandapi-paper-shade:11.0.1-SNAPSHOT")
-    implementation("org.reflections:reflections:0.9.11")
-    implementation("de.t14d3:spool:b3b13b2bcf")
-}
+
 
 tasks {
+
+
+    val buildDir = file(layout.buildDirectory.get().asFile.resolve("libs"))
+
+    val paperJar by registering(ShadowJar::class) {
+        archiveBaseName.set("RapunzelCore")
+        archiveVersion.set(project.version.toString())
+        archiveClassifier.set("paper")
+        destinationDirectory.set(buildDir)
+
+        manifest {
+            attributes["paperweight-mappings-namespace"] = "mojang"
+        }
+
+        dependsOn(
+            project(":shared").tasks.named("classes"),
+            project(":paper").tasks.named("classes"),
+        )
+
+        from(project(":shared").the<SourceSetContainer>()["main"].output)
+        from(project(":paper").the<SourceSetContainer>()["main"].output)
+
+        configurations = listOf(
+            project(":shared").configurations.getByName("runtimeClasspath"),
+            project(":paper").configurations.getByName("runtimeClasspath"),
+        )
+
+        mergeServiceFiles()
+
+        relocate("org.reflections", "de.t14d3.rapunzelcore.libs.reflections")
+        relocate("redis.clients.jedis", "de.t14d3.rapunzelcore.libs.jedis")
+    }
+
+    val velocityJar by registering(ShadowJar::class) {
+        archiveBaseName.set("RapunzelCore")
+        archiveVersion.set(project.version.toString())
+        archiveClassifier.set("velocity")
+        destinationDirectory.set(buildDir)
+
+        dependsOn(
+            project(":shared").tasks.named("classes"),
+            project(":velocity").tasks.named("classes"),
+        )
+
+        from(project(":shared").the<SourceSetContainer>()["main"].output)
+        from(project(":velocity").the<SourceSetContainer>()["main"].output)
+
+        configurations = listOf(
+            project(":shared").configurations.getByName("runtimeClasspath"),
+            project(":velocity").configurations.getByName("runtimeClasspath"),
+        )
+
+        mergeServiceFiles()
+        relocate("redis.clients.jedis", "de.t14d3.rapunzelcore.libs.jedis")
+    }
+
+    val allJar by registering(ShadowJar::class) {
+        archiveBaseName.set("RapunzelCore")
+        archiveVersion.set(project.version.toString())
+        archiveClassifier.set("all")
+        destinationDirectory.set(buildDir)
+
+        manifest {
+            attributes["paperweight-mappings-namespace"] = "mojang"
+        }
+
+        dependsOn(
+            project(":shared").tasks.named("classes"),
+            project(":paper").tasks.named("classes"),
+            project(":velocity").tasks.named("classes"),
+        )
+
+        from(project(":shared").the<SourceSetContainer>()["main"].output)
+        from(project(":paper").the<SourceSetContainer>()["main"].output)
+        from(project(":velocity").the<SourceSetContainer>()["main"].output)
+
+        configurations = listOf(
+            project(":shared").configurations.getByName("runtimeClasspath"),
+            project(":paper").configurations.getByName("runtimeClasspath"),
+            project(":velocity").configurations.getByName("runtimeClasspath"),
+        )
+
+        mergeServiceFiles()
+
+        relocate("org.reflections", "de.t14d3.rapunzelcore.libs.reflections")
+        relocate("redis.clients.jedis", "de.t14d3.rapunzelcore.libs.jedis")
+    }
+
+
+
+    named("assemble") {
+        dependsOn(paperJar, velocityJar, allJar)
+    }
+
+
+    named<ShadowJar>("shadowJar") {
+        enabled = false
+        dependsOn(paperJar, velocityJar, allJar)
+    }
+
     runServer {
+        dependsOn(allJar)
         minecraftVersion("1.21.10")
+        pluginJars.from(allJar.flatMap { it.archiveFile })
     }
-}
 
-val targetJavaVersion = 21
-java {
-    val javaVersion = JavaVersion.toVersion(targetJavaVersion)
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaVersion
-    if (JavaVersion.current() < javaVersion) {
-        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
-    }
-}
+    /**
+     * Builds the Paper/Velocity plugin jars, then runs the `server-runner` CLI which downloads
+     * temporary Paper + Velocity servers via Fill v3 and copies the plugin jars into their
+     * respective `plugins/` folders.
+     *
+     * Configure via Gradle properties:
+     * - `-PmultiPaperVersion=1.21.10` (default: 1.21.10)
+     * - `-PmultiPaperCount=2` (default: 2)
+     * - `-PmultiPaperBasePort=25565` (default: 25565)
+     * - `-PmultiVelocityVersion=<version on Fill>` (required)
+     * - `-PmultiVelocityPort=25577` (default: 25577)
+     * - `-PmultiRunnerJvmArgs=-Xmx2G,-Dfoo=bar` (optional, comma-separated)
+     */
+    register<JavaExec>("runMultiServers") {
+        group = "run"
+        description = "Runs Velocity + multiple Paper backends via Fill v3 (uses server-runner)."
 
-tasks.withType<JavaCompile>().configureEach {
-    options.encoding = "UTF-8"
+        dependsOn(paperJar, velocityJar, project(":server-runner").tasks.named("classes"))
 
-    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible) {
-        options.release.set(targetJavaVersion)
-    }
-    dependsOn("checkMessageKeys")
-}
+        val runner = project(":server-runner")
+        val mainSourceSet = runner.the<SourceSetContainer>()["main"]
+        classpath = mainSourceSet.runtimeClasspath
+        mainClass.set("de.t14d3.rapunzelcore.serverrunner.ServerRunnerMain")
 
-tasks.shadowJar {
-    manifest {
-        attributes["paperweight-mappings-namespace"] = "mojang"
-    }
-}
+        doFirst {
+            val paperVersion = (findProperty("multiPaperVersion") as String?) ?: "1.21.10"
+            val paperCount = (findProperty("multiPaperCount") as String?) ?: "2"
+            val paperBasePort = (findProperty("multiPaperBasePort") as String?) ?: "25566"
+            val velocityVersion = (findProperty("multiVelocityVersion") as String?) ?: "latest"
+            val velocityPort = (findProperty("multiVelocityPort") as String?) ?: "25565"
+            val runnerJvmArgsRaw = findProperty("multiRunnerJvmArgs") as String?
 
-tasks.register("checkMessageKeys") {
-    group = "verification"
-    description = "Checks if all message keys used in the code are present in messages.properties"
+            val paperPluginJar = paperJar.flatMap { it.archiveFile }.get().asFile.absolutePath
+            val velocityPluginJar = velocityJar.flatMap { it.archiveFile }.get().asFile.absolutePath
 
-    doLast {
-        val sourceDir = project.layout.projectDirectory.dir("src/main/java")
-        val messagesFile = project.layout.projectDirectory.file("src/main/resources/messages.properties")
-
-        // Load message keys from properties file
-        val definedKeys = mutableSetOf<String>()
-        if (messagesFile.asFile.exists()) {
-            val props = Properties()
-            messagesFile.asFile.inputStream().use { props.load(it) }
-            definedKeys.addAll(props.keys.map { it.toString() })
-        } else {
-            throw GradleException("messages.properties file not found at ${messagesFile.asFile.absolutePath}")
-        }
-
-        // Find all Java files
-        val javaFiles = project.fileTree(sourceDir) {
-            include("**/*.java")
-        }
-
-        // Extract used message keys.
-        // This regex captures literal strings passed to getMessage(...). It will capture both:
-        //   getMessage("some.key")
-        //   getMessage("prefix." + something)
-        // We treat captured literals that end with '.' as dynamic prefixes.
-        val usedKeys = mutableSetOf<String>()
-        val regex = Regex("""getMessage\s*\(\s*"([^"]+)"(?:\s*\+\s*[^)]*)?\)""")
-
-        javaFiles.forEach { file ->
-            val content = file.readText()
-            regex.findAll(content).forEach { match ->
-                usedKeys.add(match.groupValues[1])
+            if (!runnerJvmArgsRaw.isNullOrBlank()) {
+                jvmArgs(runnerJvmArgsRaw.split(',').map { it.trim() }.filter { it.isNotEmpty() })
             }
-        }
 
-        // Determine missing keys.
-        // If a used key ends with '.', assume it's a dynamic prefix and accept it if
-        // at least one defined key starts with that prefix.
-        val missingKeys = usedKeys.filter { usedKey ->
-            if (usedKey.endsWith(".")) {
-                definedKeys.none { it.startsWith(usedKey) }
-            } else {
-                !definedKeys.contains(usedKey)
-            }
-        }.toSortedSet()
-
-        if (missingKeys.isNotEmpty()) {
-            val errorMessage = buildString {
-                appendLine("The following message keys are used in the code but not defined in messages.properties:")
-                missingKeys.forEach { key ->
-                    appendLine("  - $key")
-                }
-                appendLine("Please add the missing keys to src/main/resources/messages.properties")
-            }
-            throw GradleException(errorMessage)
-        } else {
-            println("All message keys used in the code are present in messages.properties")
+            args(
+                "--paper-version", paperVersion,
+                "--paper-count", paperCount,
+                "--paper-base-port", paperBasePort,
+                "--paper-plugin", paperPluginJar,
+                "--velocity-version", velocityVersion,
+                "--velocity-port", velocityPort,
+                "--velocity-plugin", velocityPluginJar,
+                "--mysql",
+            )
         }
     }
 }

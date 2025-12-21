@@ -6,3 +6,5 @@ pluginManagement {
 }
 
 rootProject.name = "RapunzelCore"
+
+include("shared", "paper", "velocity", "server-runner")

@@ -1,0 +1,18 @@
+# Module configuration
+# Set to false to disable specific modules
+modules:
+  script: true
+  joinleave: true
+  interaction: true
+  shulker: true
+  warps: false
+  homes: false
+  teamchat: true
+  commands: true
+  teleports: true
+  chat: true
+
+# Database configuration
+database:
+  # JDBC connection string
+  jdbc: "jdbc:sqlite:plugins/RapunzelCore/rapunzelcore.db"
