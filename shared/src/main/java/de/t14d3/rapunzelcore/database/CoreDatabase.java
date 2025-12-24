@@ -1,96 +1,137 @@
 package de.t14d3.rapunzelcore.database;
 
-import de.t14d3.rapunzelcore.RapunzelCore;
-import de.t14d3.rapunzelcore.database.entities.Channel;
-import de.t14d3.rapunzelcore.database.entities.Home;
-import de.t14d3.rapunzelcore.database.entities.Player;
-import de.t14d3.rapunzelcore.database.entities.Warp;
+import de.t14d3.rapunzelcore.database.sync.DbEntitySync;
+import de.t14d3.rapunzellib.database.SpoolDatabase;
+import de.t14d3.rapunzellib.network.Messenger;
 import de.t14d3.spool.core.EntityManager;
-import org.jetbrains.annotations.NotNull;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.function.Supplier;
 
 /**
- * Paper-specific database implementation that extends the shared CoreDatabase.
- * This class handles Paper/Bukkit-specific database operations and initialization.
+ * Compatibility facade for RapunzelCore code that expects static DB helpers.
+ *
+ * <p>Actual DB lifecycle is handled by RapunzelLib's {@link SpoolDatabase}.</p>
  */
-public class CoreDatabase{
+public final class CoreDatabase {
+    private static volatile SpoolDatabase database;
+    private static volatile DbEntitySync entitySync;
+    private static volatile ExecutorService executor;
+    private static final Object EXECUTOR_LOCK = new Object();
 
-    private static EntityManager entityManager;
-    private static String connectionString;
-    private static final ExecutorService FLUSH_EXECUTOR = Executors.newSingleThreadExecutor(new ThreadFactory() {
-        @Override
-        public Thread newThread(@NotNull Runnable r) {
-            Thread t = new Thread(r, "RapunzelCore-DBFlush");
-            t.setDaemon(true);
-            return t;
-        }
-    });
-
-
-    public CoreDatabase(String connectionString) {
-        CoreDatabase.connectionString = connectionString;
-        Connection conn;
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-
-            conn = DriverManager.getConnection(connectionString);
-            entityManager = EntityManager.create(conn);
-
-            // Run DB migrations
-            RapunzelCore.getLogger().info("Running DB migrations...");
-            entityManager.registerEntities(Player.class, Home.class, Warp.class, Channel.class);
-            RapunzelCore.getLogger().info("Applying {} migrations", entityManager.updateSchema());
-            RapunzelCore.getLogger().info("Schema valid: {}", entityManager.validateSchema());
-        } catch (Exception e) {
-            throw new RuntimeException("CoreDatabase initialization failed", e);
-        }
+    private CoreDatabase() {
     }
 
+    public static void init(SpoolDatabase newDatabase) {
+        database = newDatabase;
+    }
 
-    public void close() {
-        // Close database connection if needed
+    public static void shutdown() {
+        DbEntitySync sync = entitySync;
+        if (sync != null) {
+            try {
+                sync.close();
+            } catch (Exception ignored) {
+            }
+        }
+        entitySync = null;
+
+        ExecutorService currentExecutor = executor;
+        executor = null;
+        if (currentExecutor != null) {
+            try {
+                currentExecutor.shutdownNow();
+            } catch (Exception ignored) {
+            }
+        }
+        database = null;
+    }
+
+    public static SpoolDatabase db() {
+        SpoolDatabase current = database;
+        if (current == null) {
+            throw new IllegalStateException(
+                "SpoolDatabase not initialized. Call CoreDatabase.init(...) during plugin enable."
+            );
+        }
+        return current;
     }
 
     public static EntityManager getEntityManager() {
-        return entityManager;
+        return db().entityManager();
     }
 
-    public static Connection openConnection() {
-        if (connectionString == null || connectionString.isBlank()) {
-            throw new IllegalStateException("Database connection string not initialized");
+    public static void startEntitySync(Messenger messenger) {
+        if (messenger == null) {
+            throw new IllegalArgumentException("messenger must not be null");
         }
-        try {
-            return DriverManager.getConnection(connectionString);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to open DB connection", e);
+        if (entitySync != null) {
+            return;
         }
+        synchronized (CoreDatabase.class) {
+            if (entitySync != null) {
+                return;
+            }
+            entitySync = new DbEntitySync(db(), messenger);
+        }
+    }
+
+    public static DbEntitySync entitySync() {
+        return entitySync;
     }
 
     public static void runLocked(Runnable runnable) {
-        if (entityManager == null) {
-            throw new IllegalStateException("EntityManager not initialized");
-        }
-        synchronized (entityManager) {
-            runnable.run();
-        }
+        db().runLocked(runnable);
     }
 
     public static <T> T locked(Supplier<T> supplier) {
-        if (entityManager == null) {
-            throw new IllegalStateException("EntityManager not initialized");
+        return db().locked(supplier);
+    }
+
+    private static ExecutorService getExecutor() {
+        ExecutorService current = executor;
+        if (current != null && !current.isShutdown()) {
+            return current;
         }
-        synchronized (entityManager) {
-            return supplier.get();
+        synchronized (EXECUTOR_LOCK) {
+            current = executor;
+            if (current != null && !current.isShutdown()) {
+                return current;
+            }
+            ThreadFactory factory = runnable -> {
+                Thread thread = new Thread(runnable, "RapunzelCore-DB");
+                thread.setDaemon(true);
+                return thread;
+            };
+            executor = Executors.newSingleThreadExecutor(factory);
+            return executor;
         }
     }
 
+    public static CompletableFuture<Void> runAsync(Runnable runnable) {
+        if (runnable == null) return CompletableFuture.completedFuture(null);
+        return CompletableFuture.runAsync(runnable, getExecutor());
+    }
+
+    public static <T> CompletableFuture<T> supplyAsync(Supplier<T> supplier) {
+        if (supplier == null) return CompletableFuture.completedFuture(null);
+        return CompletableFuture.supplyAsync(supplier, getExecutor());
+    }
+
+    public static CompletableFuture<Void> runLockedAsync(Runnable runnable) {
+        if (runnable == null) return CompletableFuture.completedFuture(null);
+        return runAsync(() -> runLocked(runnable));
+    }
+
+    public static <T> CompletableFuture<T> lockedAsync(Supplier<T> supplier) {
+        if (supplier == null) return CompletableFuture.completedFuture(null);
+        return supplyAsync(() -> locked(supplier));
+    }
+
     public static void flushAsync() {
-        FLUSH_EXECUTOR.execute(() -> runLocked(() -> entityManager.flush()));
+        db().flushAsync();
     }
 }

@@ -1,16 +1,20 @@
 package de.t14d3.rapunzelcore.modules.teleports;
 
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
+import de.t14d3.rapunzelcore.database.CoreDatabase;
 import de.t14d3.rapunzelcore.database.entities.Warp;
 import de.t14d3.rapunzelcore.modules.commands.Command;
 import de.t14d3.rapunzelcore.util.Utils;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.StringArgument;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import java.util.List;
+import java.util.UUID;
 
 public class WarpCommands implements Command {
     private final RapunzelPaperCore plugin;
@@ -51,8 +55,14 @@ public class WarpCommands implements Command {
                         player.sendMessage(plugin.getMessageHandler().getMessage("teleports.warp.error.no_permission", warpName));
                         return Command.SINGLE_SUCCESS;
                     }
-                    player.teleport(Utils.getLocation(warp));
-                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.warp.success", warpName));
+
+                    if (TeleportsNetwork.isLocal(warp.getServer())) {
+                        player.teleport(Utils.getLocation(warp));
+                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.warp.success", warpName));
+                        return Command.SINGLE_SUCCESS;
+                    }
+
+                    queueWarpTeleport(player, warp);
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
@@ -68,9 +78,31 @@ public class WarpCommands implements Command {
                 .executes((executor, args) -> {
                     Player player = (Player) executor;
                     String warpName = (String) args.get("warpName");
-                    String permission = (String) args.get("permission");
-                    WarpsRepository.setWarp(warpName, player.getLocation(), permission);
-                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.setwarp.success", warpName).color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
+                    String permission = (String) args.get("permission");        
+                    UUID playerId = player.getUniqueId();
+                    Location location = player.getLocation();
+                    String worldName = location.getWorld() != null ? location.getWorld().getName() : null;
+                    String serverName = TeleportsNetwork.localServerNameIfKnown();
+
+                    WarpsRepository.setWarpAsync(
+                        warpName,
+                        worldName,
+                        serverName,
+                        location.getX(),
+                        location.getY(),
+                        location.getZ(),
+                        location.getYaw(),
+                        location.getPitch(),
+                        permission
+                    ).whenComplete((ignored, error) -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        Player online = Bukkit.getPlayer(playerId);
+                        if (online == null || !online.isOnline()) return;
+                        if (error != null) {
+                            plugin.getLogger().warning("Failed to set warp '" + warpName + "' for " + playerId + ": " + error.getMessage());
+                            return;
+                        }
+                        online.sendMessage(plugin.getMessageHandler().getMessage("teleports.setwarp.success", warpName).color(NamedTextColor.GREEN));
+                    }));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
@@ -88,8 +120,20 @@ public class WarpCommands implements Command {
                         player.sendMessage(plugin.getMessageHandler().getMessage("teleports.delwarp.error.invalid", warpName));
                         return Command.SINGLE_SUCCESS;
                     }
-                    WarpsRepository.deleteWarp(warpName);
-                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.delwarp.success", warpName));
+                    UUID playerId = player.getUniqueId();
+                    WarpsRepository.deleteWarpAsync(warpName).whenComplete((deleted, error) -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        Player online = Bukkit.getPlayer(playerId);
+                        if (online == null || !online.isOnline()) return;
+                        if (error != null) {
+                            plugin.getLogger().warning("Failed to delete warp '" + warpName + "' for " + playerId + ": " + error.getMessage());
+                            return;
+                        }
+                        if (deleted == null || !deleted) {
+                            online.sendMessage(plugin.getMessageHandler().getMessage("teleports.delwarp.error.invalid", warpName));
+                            return;
+                        }
+                        online.sendMessage(plugin.getMessageHandler().getMessage("teleports.delwarp.success", warpName));
+                    }));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
@@ -108,6 +152,10 @@ public class WarpCommands implements Command {
                     Component message = plugin.getMessageHandler().getMessage("teleports.warps.header");
                     for (Warp warp : warps) {
                         String perm = warp.getPermission();
+                        if (!TeleportsNetwork.isLocal(warp.getServer())) {
+                            message = message.appendNewline().append(Component.text("- " + warp.getName() + " (" + warp.getServer() + ")"));
+                            continue;
+                        }
                         Location loc = Utils.getLocation(warp);
                         Component entry = plugin.getMessageHandler().getMessage("teleports.warps.entry",
                                 warp.getName(),
@@ -147,10 +195,67 @@ public class WarpCommands implements Command {
                 .withPermission("rapunzelcore.setspawn")
                 .executes((executor, args) -> {
                     Player player = (Player) executor;
-                    WarpsRepository.setSpawn(player.getWorld().getName(), player.getLocation());
-                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.setspawn.success").color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
+                    UUID playerId = player.getUniqueId();
+                    Location location = player.getLocation();
+                    String worldName = location.getWorld() != null ? location.getWorld().getName() : null;
+                    String spawnName = "__internal__" + worldName + "__spawn__";
+                    String serverName = TeleportsNetwork.localServerNameIfKnown();
+
+                    WarpsRepository.setWarpAsync(
+                        spawnName,
+                        worldName,
+                        serverName,
+                        location.getX(),
+                        location.getY(),
+                        location.getZ(),
+                        location.getYaw(),
+                        location.getPitch(),
+                        null
+                    ).whenComplete((ignored, error) -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        Player online = Bukkit.getPlayer(playerId);
+                        if (online == null || !online.isOnline()) return;
+                        if (error != null) {
+                            plugin.getLogger().warning("Failed to set spawn for " + playerId + ": " + error.getMessage());
+                            return;
+                        }
+                        online.sendMessage(plugin.getMessageHandler().getMessage("teleports.setspawn.success").color(NamedTextColor.GREEN));
+                    }));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
+    }
+
+    private void queueWarpTeleport(Player player, Warp warp) {
+        if (player == null || warp == null) return;
+        String targetServer = warp.getServer();
+        if (targetServer == null || targetServer.isBlank()) return;
+
+        UUID playerId = player.getUniqueId();
+        String playerUuid = playerId.toString();
+        String warpName = warp.getName();
+
+        CoreDatabase.runAsync(() -> PendingTeleportsRepository.create(
+            playerUuid,
+            targetServer,
+            TeleportsNetwork.TeleportsActions.WARP,
+            warpName
+        )).whenComplete((ignored, error) -> Bukkit.getScheduler().runTask(plugin, () -> {
+            Player online = Bukkit.getPlayer(playerId);
+            if (online == null || !online.isOnline()) return;
+            if (error != null) {
+                plugin.getLogger().warning("Failed to queue warp teleport for " + playerId + ": " + error.getMessage());
+                return;
+            }
+
+            new de.t14d3.rapunzellib.network.NetworkEventBus(plugin.getMessenger()).sendToProxy(
+                de.t14d3.rapunzelcore.network.NetworkChannels.TELEPORTS_PROXY,
+                new de.t14d3.rapunzelcore.modules.teleports.network.ProxyConnectRequest(
+                    playerUuid,
+                    targetServer
+                )
+            );
+
+            online.sendMessage(plugin.getMessageHandler().getMessage("teleports.warp.success", warpName));
+        }));
     }
 }

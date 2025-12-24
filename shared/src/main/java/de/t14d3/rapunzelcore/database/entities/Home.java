@@ -14,6 +14,9 @@ public class Home {
     @Column(name = "world")
     public String world;
 
+    @Column(name = "server")
+    public String server;
+
     @Column(name = "x")
     public double x;
 
@@ -29,19 +32,19 @@ public class Home {
     @Column(name = "yaw")
     public float yaw;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "player_id", referencedColumnName = "uuid")
-    public Player player;
+    public PlayerEntity playerEntity;
 
     public Home() {}
 
 
-    public Player getPlayer() {
-        return player;
+    public PlayerEntity getPlayer() {
+        return playerEntity;
     }
 
-    public void setPlayer(Player player) {
-        this.player = player;
+    public void setPlayer(PlayerEntity playerEntity) {
+        this.playerEntity = playerEntity;
     }
 
     public float getYaw() {
@@ -90,6 +93,14 @@ public class Home {
 
     public void setWorld(String world) {
         this.world = world;
+    }
+
+    public String getServer() {
+        return server;
+    }
+
+    public void setServer(String server) {
+        this.server = server;
     }
 
     public String getName() {

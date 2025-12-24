@@ -1,18 +1,19 @@
 package de.t14d3.rapunzelcore.modules.teleports;
 
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
-import de.t14d3.rapunzelcore.database.entities.Home;
+import de.t14d3.rapunzelcore.database.CoreDatabase;
 import de.t14d3.rapunzelcore.modules.commands.Command;
-import de.t14d3.rapunzelcore.util.Utils;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.StringArgument;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import java.util.List;
+import java.util.UUID;
 
 public class HomeCommands implements Command {
     private final RapunzelPaperCore plugin;
@@ -35,12 +36,6 @@ public class HomeCommands implements Command {
         return 1; // Default to 1 home if no specific permission is found
     }
 
-    private boolean canSetMoreHomes(Player player) {
-        int currentHomes = HomesRepository.getHomes(player).size();
-        int maxHomes = getMaxHomes(player);
-        return currentHomes < maxHomes;
-    }
-
     public void register() {
         // Home command
         new CommandAPICommand("home")
@@ -53,13 +48,37 @@ public class HomeCommands implements Command {
                     if (homeName == null) {
                         homeName = "default";
                     }
-                    Location homeLocation = HomesRepository.getHomeLocation(player, homeName);
-                    if (homeLocation == null) {
-                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.home.error.no_home", homeName));
-                        return Command.SINGLE_SUCCESS;
-                    }
-                    player.teleport(homeLocation);
-                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.home.success", homeName));
+                    UUID playerId = player.getUniqueId();
+                    String requestedHome = homeName;
+
+                    HomesRepository.getHomeAsync(playerId, requestedHome).whenComplete((home, error) -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        Player online = Bukkit.getPlayer(playerId);
+                        if (online == null || !online.isOnline()) return;
+
+                        if (error != null) {
+                            plugin.getLogger().warning("Failed to load home '" + requestedHome + "' for " + playerId + ": " + error.getMessage());
+                            return;
+                        }
+
+                        if (home == null) {
+                            online.sendMessage(plugin.getMessageHandler().getMessage("teleports.home.error.no_home", requestedHome));
+                            return;
+                        }
+
+                        if (TeleportsNetwork.isLocal(home.server())) {
+                            org.bukkit.World world = Bukkit.getWorld(home.world());
+                            if (world == null) {
+                                online.sendMessage(plugin.getMessageHandler().getMessage("teleports.home.error.no_home", requestedHome));
+                                return;
+                            }
+                            Location homeLocation = new Location(world, home.x(), home.y(), home.z(), home.yaw(), home.pitch());
+                            online.teleport(homeLocation);
+                            online.sendMessage(plugin.getMessageHandler().getMessage("teleports.home.success", requestedHome));
+                            return;
+                        }
+
+                        queueHomeTeleport(playerId, home);
+                    }));
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
@@ -68,44 +87,71 @@ public class HomeCommands implements Command {
         new CommandAPICommand("sethome")
                 .withArguments(new StringArgument("homeName").setOptional(true))
                 .withFullDescription("Sets the player's home location.")
-                .withPermission("rapunzelcore.sethome")
-                .executes((executor, args) -> {
-                    Player player = (Player) executor;
-                    String homeName = (String) args.get("homeName");
-                    if (homeName == null) {
-                        homeName = "default";
-                    }
-                    
-                    // Check if player already has a home with this name (updating is always allowed)
-                    boolean isUpdating = HomesRepository.getHomeLocation(player, homeName) != null;
-                    
-                    // If not updating, check if they can set more homes
-                    if (!isUpdating && !canSetMoreHomes(player)) {
-                        int maxHomes = getMaxHomes(player);
-                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.sethome.error.limit_reached", 
-                                String.valueOf(maxHomes)).color(NamedTextColor.RED));
-                        return Command.SINGLE_SUCCESS;
-                    }
-                    
-                    HomesRepository.setHome(player, homeName, player.getLocation());
-                    
-                    if (isUpdating) {
-                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.sethome.updated", homeName).color(NamedTextColor.YELLOW));
-                    } else {
-                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.sethome.success", homeName).color(NamedTextColor.GREEN));
-                        
-                        // Show remaining homes if not unlimited
-                        if (!player.hasPermission("rapunzelcore.homes.unlimited")) {
-                            int remaining = getMaxHomes(player) - HomesRepository.getHomes(player).size();
-                            if (remaining == 0) {
-                                player.sendMessage(plugin.getMessageHandler().getMessage("teleports.sethome.limit_reached")
-                                        .color(NamedTextColor.GOLD));
-                            } else {
-                                player.sendMessage(plugin.getMessageHandler().getMessage("teleports.sethome.remaining", 
-                                        String.valueOf(remaining)).color(NamedTextColor.GRAY));
+                 .withPermission("rapunzelcore.sethome")
+                 .executes((executor, args) -> {
+                     Player player = (Player) executor;
+                    String homeNameArg = (String) args.get("homeName");
+                    final String homeName = (homeNameArg == null) ? "default" : homeNameArg;
+
+                    UUID playerId = player.getUniqueId();
+                    int maxHomes = getMaxHomes(player);
+                    Location location = player.getLocation();
+                    String worldName = location.getWorld() != null ? location.getWorld().getName() : null;
+                    String serverName = TeleportsNetwork.localServerNameIfKnown();
+                    HomesRepository.HomeSnapshot snapshot = new HomesRepository.HomeSnapshot(
+                        homeName,
+                        worldName,
+                        serverName,
+                        location.getX(),
+                        location.getY(),
+                        location.getZ(),
+                        location.getYaw(),
+                        location.getPitch()
+                    );
+
+                    HomesRepository.setHomeAsync(playerId, snapshot, maxHomes).whenComplete((result, error) ->
+                        Bukkit.getScheduler().runTask(plugin, () -> {
+                            Player online = Bukkit.getPlayer(playerId);
+                            if (online == null || !online.isOnline()) return;
+
+                            if (error != null || result == null || result.status() == null) {
+                                String msg = error != null ? error.getMessage() : "unknown";
+                                plugin.getLogger().warning("Failed to set home '" + homeName + "' for " + playerId + ": " + msg);
+                                return;
                             }
-                        }
-                    }
+
+                            if (result.status() == HomesRepository.SetHomeStatus.LIMIT_REACHED) {
+                                online.sendMessage(plugin.getMessageHandler()
+                                    .getMessage("teleports.sethome.error.limit_reached", String.valueOf(result.maxHomes()))
+                                    .color(NamedTextColor.RED));
+                                return;
+                            }
+
+                            if (result.status() == HomesRepository.SetHomeStatus.UPDATED) {
+                                online.sendMessage(plugin.getMessageHandler()
+                                    .getMessage("teleports.sethome.updated", homeName)
+                                    .color(NamedTextColor.YELLOW));
+                                return;
+                            }
+
+                            online.sendMessage(plugin.getMessageHandler()
+                                .getMessage("teleports.sethome.success", homeName)
+                                .color(NamedTextColor.GREEN));
+
+                            if (!online.hasPermission("rapunzelcore.homes.unlimited")) {
+                                int remaining = result.remainingHomes();
+                                if (remaining <= 0) {
+                                    online.sendMessage(plugin.getMessageHandler()
+                                        .getMessage("teleports.sethome.limit_reached")
+                                        .color(NamedTextColor.GOLD));
+                                } else {
+                                    online.sendMessage(plugin.getMessageHandler()
+                                        .getMessage("teleports.sethome.remaining", String.valueOf(remaining))
+                                        .color(NamedTextColor.GRAY));
+                                }
+                            }
+                        })
+                    );
 
                     return Command.SINGLE_SUCCESS;
                 })
@@ -122,13 +168,27 @@ public class HomeCommands implements Command {
                     if (homeName == null) {
                         homeName = "default";
                     }
-                    Location homeLocation = HomesRepository.getHomeLocation(player, homeName);
-                    if (homeLocation == null) {
-                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.delhome.error.no_home", homeName));
-                        return Command.SINGLE_SUCCESS;
-                    }
-                    HomesRepository.deleteHome(player, homeName);
-                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.delhome.success", homeName));
+                    UUID playerId = player.getUniqueId();
+                    String targetHome = homeName;
+
+                    HomesRepository.deleteHomeAsync(playerId, targetHome).whenComplete((deleted, error) ->
+                        Bukkit.getScheduler().runTask(plugin, () -> {
+                            Player online = Bukkit.getPlayer(playerId);
+                            if (online == null || !online.isOnline()) return;
+
+                            if (error != null) {
+                                plugin.getLogger().warning("Failed to delete home '" + targetHome + "' for " + playerId + ": " + error.getMessage());
+                                return;
+                            }
+
+                            if (deleted == null || !deleted) {
+                                online.sendMessage(plugin.getMessageHandler().getMessage("teleports.delhome.error.no_home", targetHome));
+                                return;
+                            }
+
+                            online.sendMessage(plugin.getMessageHandler().getMessage("teleports.delhome.success", targetHome));
+                        })
+                    );
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
@@ -139,22 +199,45 @@ public class HomeCommands implements Command {
                 .withPermission("rapunzelcore.homes")
                 .executes((executor, args) -> {
                     Player player = (Player) executor;
-                    List<Home> homes = HomesRepository.getHomes(player);
-                    if (homes.isEmpty()) {
-                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.homes.error.none"));
-                        return Command.SINGLE_SUCCESS;
-                    }
-                    Component message = plugin.getMessageHandler().getMessage("teleports.homes.header");
-                    for (Home home : homes) {
-                        Location loc = Utils.getLocation(home);
-                        message = message.appendNewline().append(plugin.getMessageHandler().getMessage("teleports.homes.entry",
-                                home.getName(),
-                                String.valueOf(loc.getBlockX()),
-                                String.valueOf(loc.getBlockY()),
-                                String.valueOf(loc.getBlockZ())
-                        ));
-                    }
-                    player.sendMessage(message);
+                    UUID playerId = player.getUniqueId();
+
+                    HomesRepository.getHomesAsync(playerId).whenComplete((homes, error) ->
+                        Bukkit.getScheduler().runTask(plugin, () -> {
+                            Player online = Bukkit.getPlayer(playerId);
+                            if (online == null || !online.isOnline()) return;
+
+                            if (error != null) {
+                                plugin.getLogger().warning("Failed to list homes for " + playerId + ": " + error.getMessage());
+                                return;
+                            }
+
+                            if (homes == null || homes.isEmpty()) {
+                                online.sendMessage(plugin.getMessageHandler().getMessage("teleports.homes.error.none"));
+                                return;
+                            }
+
+                            Component message = plugin.getMessageHandler().getMessage("teleports.homes.header");
+                            for (HomesRepository.HomeSnapshot home : homes) {
+                                if (home == null || home.name() == null) continue;
+
+                                if (!TeleportsNetwork.isLocal(home.server())) {
+                                    message = message.appendNewline().append(Component.text("- " + home.name() + " (" + home.server() + ")"));
+                                    continue;
+                                }
+
+                                int bx = (int) Math.floor(home.x());
+                                int by = (int) Math.floor(home.y());
+                                int bz = (int) Math.floor(home.z());
+                                message = message.appendNewline().append(plugin.getMessageHandler().getMessage("teleports.homes.entry",
+                                    home.name(),
+                                    String.valueOf(bx),
+                                    String.valueOf(by),
+                                    String.valueOf(bz)
+                                ));
+                            }
+                            online.sendMessage(message);
+                        })
+                    );
                     return Command.SINGLE_SUCCESS;
                 })
                 .register(plugin);
@@ -163,5 +246,36 @@ public class HomeCommands implements Command {
     @Override
     public void unregister() {
         List.of("home", "sethome", "delhome", "homes").forEach(CommandAPI::unregister);
+    }
+
+    private void queueHomeTeleport(UUID playerId, HomesRepository.HomeSnapshot home) {
+        if (playerId == null || home == null) return;
+        String targetServer = home.server();
+        if (targetServer == null || targetServer.isBlank()) return;
+
+        String playerUuid = playerId.toString();
+        CoreDatabase.runAsync(() -> PendingTeleportsRepository.create(
+            playerUuid,
+            targetServer,
+            TeleportsNetwork.TeleportsActions.HOME,
+            home.name()
+        )).whenComplete((ignored, error) -> Bukkit.getScheduler().runTask(plugin, () -> {
+            Player online = Bukkit.getPlayer(playerId);
+            if (online == null || !online.isOnline()) return;
+            if (error != null) {
+                plugin.getLogger().warning("Failed to queue home teleport for " + playerId + ": " + error.getMessage());
+                return;
+            }
+
+            new de.t14d3.rapunzellib.network.NetworkEventBus(plugin.getMessenger()).sendToProxy(
+                de.t14d3.rapunzelcore.network.NetworkChannels.TELEPORTS_PROXY,
+                new de.t14d3.rapunzelcore.modules.teleports.network.ProxyConnectRequest(
+                    playerUuid,
+                    targetServer
+                )
+            );
+
+            online.sendMessage(plugin.getMessageHandler().getMessage("teleports.home.success", home.name()));
+        }));
     }
 }

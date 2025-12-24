@@ -11,7 +11,8 @@ public class CoreCommand {
                 .withPermission("rapunzelcore.admin")
                 .withSubcommands(
                         ReloadCommand.command(),
-                        ModulesCommand.command()
+                        ModulesCommand.command(),
+                        ConfigSyncCommand.command()
                 )
                 .register((JavaPlugin) RapunzelCore.getInstance());
     }

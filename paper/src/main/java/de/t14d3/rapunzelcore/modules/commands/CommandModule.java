@@ -5,7 +5,7 @@ import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.RapunzelCore;
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
 import de.t14d3.rapunzelcore.util.ReflectionsUtil;
-import org.simpleyaml.configuration.file.FileConfiguration;
+import de.t14d3.rapunzellib.config.YamlConfig;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -14,7 +14,7 @@ import java.util.Set;
 public class CommandModule implements Module {
     private boolean enabled = false;
     private Set<Command> registeredCommands = new HashSet<>();
-    private FileConfiguration config;
+    private YamlConfig config;
 
     @Override
     public Environment getEnvironment() {
@@ -36,7 +36,7 @@ public class CommandModule implements Module {
 
         Set<Class<? extends Command>> commands = ReflectionsUtil.getSubTypes(Command.class);
         commands.forEach(clazz -> {
-            if (!config.getKeys(false).contains(name(clazz))) {
+            if (!config.keys(false).contains(name(clazz))) {
                 config.set(name(clazz), true);
             }
         });

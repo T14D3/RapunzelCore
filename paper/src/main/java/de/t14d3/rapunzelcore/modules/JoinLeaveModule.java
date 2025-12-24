@@ -4,6 +4,7 @@ import de.t14d3.rapunzelcore.Environment;
 import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.RapunzelCore;
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
+import de.t14d3.rapunzellib.config.YamlConfig;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.entity.Player;
@@ -11,7 +12,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.simpleyaml.configuration.file.FileConfiguration;
 
 import static net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.parsed;
 
@@ -74,26 +74,26 @@ public class JoinLeaveModule implements Module {
 
     public void setJoinMessage(String message) {
         joinMessage = message != null ? message.trim() : "";
-        FileConfiguration config = loadConfig();
+        YamlConfig config = loadConfig();
         config.set("join-message", joinMessage);
         saveConfig(config);
     }
 
     public void setLeaveMessage(String message) {
         leaveMessage = message != null ? message.trim() : "";
-        FileConfiguration config = loadConfig();
+        YamlConfig config = loadConfig();
         config.set("leave-message", leaveMessage);
         saveConfig(config);
     }
 
     private void loadMessages() {
-        FileConfiguration config = loadConfig();
+        YamlConfig config = loadConfig();
         joinMessage = config.getString("join-message", "");
         leaveMessage = config.getString("leave-message", "");
     }
 
     private void saveMessages() {
-        FileConfiguration config = loadConfig();
+        YamlConfig config = loadConfig();
         config.set("join-message", joinMessage);
         config.set("leave-message", leaveMessage);
         saveConfig(config);

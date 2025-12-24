@@ -1,12 +1,10 @@
 package de.t14d3.rapunzelcore;
 
-import de.t14d3.rapunzelcore.database.CoreDatabase;
-import de.t14d3.rapunzelcore.database.entities.Player;
-import de.t14d3.rapunzelcore.messaging.Messenger;
+import de.t14d3.rapunzellib.database.SpoolDatabase;
+import de.t14d3.rapunzellib.network.Messenger;
+import de.t14d3.rapunzellib.config.YamlConfig;
 import de.t14d3.rapunzelcore.modules.chat.ChannelManager;
 import de.t14d3.rapunzelcore.modules.chat.ChatModule;
-import net.kyori.adventure.text.Component;
-import org.simpleyaml.configuration.file.FileConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +56,7 @@ public interface RapunzelCore {
      * 
      * @return The core database
      */
-    CoreDatabase getCoreDatabase();
+    SpoolDatabase getCoreDatabase();
     
     /**
      * Get the message handler for this platform.
@@ -101,16 +99,12 @@ public interface RapunzelCore {
      * Get the plugin configuration.
      * @return The configuration object
      */
-    FileConfiguration getConfiguration();
+    YamlConfig getConfiguration();
 
     PlatformManager getPlatformManager();
 
     interface PlatformManager {
         ChatModule.ChatModuleImpl createChatModuleImpl(RapunzelCore core, ChannelManager channelManager);
-
-        void sendMessage(Player player, Component message);
-
-        boolean hasPermission(Player player, String permission);
 
         /**
          * Registers the given permissions with the underlying platform, if supported.

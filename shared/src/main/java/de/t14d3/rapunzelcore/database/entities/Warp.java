@@ -16,6 +16,9 @@ public class Warp {
     @Column(name = "world")
     private String world;
 
+    @Column(name = "server")
+    private String server;
+
     @Column(name = "x")
     private double x;
 
@@ -58,6 +61,14 @@ public class Warp {
 
     public void setWorld(String world) {
         this.world = world;
+    }
+
+    public String getServer() {
+        return server;
+    }
+
+    public void setServer(String server) {
+        this.server = server;
     }
 
     public double getX() {

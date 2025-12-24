@@ -59,7 +59,7 @@ public class VanishCommand implements Listener, Command {
                                 viewer.sendMessage(RapunzelCore.getInstance().getMessageHandler().getMessage("commands.vanish.fakemessage.leave.see", target.getName()));
                             }
                         }
-                        Bukkit.getServer().broadcast(RapunzelCore.getInstance().getMessageHandler().getMessage("commands.vanish.fakemessage.leave", target.getName()));
+                        Bukkit.getServer().broadcast(RapunzelCore.getInstance().getMessageHandler().getMessage("commands.vanish.fakemessage.leave.broadcast", target.getName()));
                     } else {
                         // Disable vanish: show to everyone
                         for (Player viewer : Bukkit.getOnlinePlayers()) {
@@ -69,7 +69,7 @@ public class VanishCommand implements Listener, Command {
                                 viewer.sendMessage(RapunzelCore.getInstance().getMessageHandler().getMessage("commands.vanish.fakemessage.join.see", target.getName()));
                             }
                         }
-                        Bukkit.getServer().broadcast(RapunzelCore.getInstance().getMessageHandler().getMessage("commands.vanish.fakemessage.join", target.getName()));
+                        Bukkit.getServer().broadcast(RapunzelCore.getInstance().getMessageHandler().getMessage("commands.vanish.fakemessage.join.broadcast", target.getName()));
                     }
 
                     // Notify sender

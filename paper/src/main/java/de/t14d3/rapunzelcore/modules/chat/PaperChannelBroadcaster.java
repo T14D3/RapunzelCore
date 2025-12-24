@@ -2,11 +2,11 @@ package de.t14d3.rapunzelcore.modules.chat;
 
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
 import de.t14d3.rapunzelcore.database.entities.Channel;
-import de.t14d3.rapunzelcore.database.entities.Player;
-import de.t14d3.rapunzelcore.messaging.NetworkChannels;
-import de.t14d3.rapunzelcore.messaging.NetworkEventBus;
-import de.t14d3.rapunzelcore.messaging.NetworkEventBus.Subscription;
+import de.t14d3.rapunzelcore.network.NetworkChannels;
+import de.t14d3.rapunzellib.network.NetworkEventBus;
+import de.t14d3.rapunzellib.network.NetworkEventBus.Subscription;
 import de.t14d3.rapunzelcore.util.Utils;
+import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -44,9 +44,8 @@ public class PaperChannelBroadcaster {
     }
 
     public void broadcastOutgoing(org.bukkit.entity.Player sender, Channel channel, Component message) {
-        Player senderEntity = Utils.player(sender);
         Component formatted = format(channel, sender, message);
-        broadcastLocal(channel, sender, senderEntity, formatted);
+        broadcastLocal(channel, sender, formatted);
 
         if (channel.isCrossServer()) {
             publishCrossServer(channel.getName(), formatted);
@@ -107,12 +106,13 @@ public class PaperChannelBroadcaster {
         incomingSubscription = null;
     }
 
-    private void broadcastLocal(Channel channel, org.bukkit.entity.Player sender, Player senderEntity, Component formatted) {
-        Collection<org.bukkit.entity.Player> receivers = getReceiversForOutgoing(channel, sender, senderEntity);
+    private void broadcastLocal(Channel channel, org.bukkit.entity.Player sender, Component formatted) {
+        Collection<Audience> receivers = getReceiversForOutgoing(channel, sender);
+        receivers.add(Bukkit.getServer().getConsoleSender());
         receivers.forEach(p -> p.sendMessage(formatted));
     }
 
-    private Collection<org.bukkit.entity.Player> getReceiversForOutgoing(Channel channel, org.bukkit.entity.Player sender, Player senderEntity) {
+    private Collection<Audience> getReceiversForOutgoing(Channel channel, org.bukkit.entity.Player sender) {
         return switch (channel.getType()) {
             case GLOBAL -> new HashSet<>(Bukkit.getOnlinePlayers());
             case LOCAL -> Bukkit.getOnlinePlayers().stream()
@@ -145,7 +145,7 @@ public class PaperChannelBroadcaster {
         String payloadJson = GSON.serialize(formatted);
         ChannelMessagePayload payload = new ChannelMessagePayload(channelName, payloadJson);
 
-        // Non-blocking; if no-one is online on this backend, the PaperPluginMessenger drops the message.
+        // Plugin-messaging transport needs an online player to send/forward (PaperPluginMessenger drops when empty); Redis transport does not.
         eventBus.sendToAll(NetworkChannels.CHAT_CHANNEL_MESSAGE, payload);
     }
 

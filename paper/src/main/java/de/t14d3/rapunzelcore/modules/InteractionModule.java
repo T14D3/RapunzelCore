@@ -4,12 +4,12 @@ import de.t14d3.rapunzelcore.Environment;
 import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.RapunzelCore;
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
+import de.t14d3.rapunzellib.config.YamlConfig;
 import org.bukkit.Location;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.simpleyaml.configuration.file.FileConfiguration;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +18,7 @@ public class InteractionModule implements Module {
     private boolean enabled = false;
     private RapunzelPaperCore plugin;
     private final Map<String, String> interactions = new HashMap<>();
-    private FileConfiguration config;
+    private YamlConfig config;
 
     @Override
     public Environment getEnvironment() {
@@ -77,8 +77,8 @@ public class InteractionModule implements Module {
 
     private void loadInteractions() {
         interactions.clear();
-        for (String key : config.getKeys(false)) {
-            String command = config.getString(key);
+        for (String key : config.keys(false)) {
+            String command = config.getString(key, null);
             if (command != null && !command.trim().isEmpty()) {
                 interactions.put(key, command.trim());
             }

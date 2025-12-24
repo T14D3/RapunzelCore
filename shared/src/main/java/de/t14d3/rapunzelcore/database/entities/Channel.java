@@ -1,7 +1,7 @@
 package de.t14d3.rapunzelcore.database.entities;
 
 import de.t14d3.spool.annotations.*;
-import org.simpleyaml.configuration.file.FileConfiguration;
+import de.t14d3.rapunzellib.config.YamlConfig;
 
 /**
  * Unified database entity for all chat channels.
@@ -50,7 +50,7 @@ public class Channel {
     private boolean isDefault = false;
 
     @ManyToMany(mappedBy = "joinedChannels", fetch = FetchType.EAGER)
-    private java.util.Set<Player> members = new java.util.LinkedHashSet<>();
+    private java.util.Set<PlayerEntity> members = new java.util.LinkedHashSet<>();
 
     public Channel() {}
 
@@ -68,15 +68,15 @@ public class Channel {
         this.range = range;
     }
 
-    public boolean hasPermission(Player player) {
+    public boolean hasPermission(PlayerEntity playerEntity) {
         if (permission == null || permission.trim().isEmpty()) {
             return true;
         }
-        return player.hasPermission(permission);
+        return playerEntity.hasPermission(permission);
     }
 
     // Static factory method for creating from configuration
-    public static Channel fromConfig(String channelName, FileConfiguration config) {
+    public static Channel fromConfig(String channelName, YamlConfig config) {
         String path = "channels." + channelName;
         String typeStr = config.getString(path + ".type", "global").toUpperCase();
         ChannelType type = ChannelType.valueOf(typeStr);
@@ -167,15 +167,15 @@ public class Channel {
     }
 
     /**
-     * Inverse side of Player.joinedChannels.
+     * Inverse side of player.joinedChannels.
      *
      * For channel types that are implicit (GLOBAL/LOCAL/PERMISSION), this collection is not used.
      */
-    public java.util.Set<Player> getMembers() {
+    public java.util.Set<PlayerEntity> getMembers() {
         return members;
     }
 
-    public void setMembers(java.util.Set<Player> members) {
+    public void setMembers(java.util.Set<PlayerEntity> members) {
         this.members = (members != null) ? members : new java.util.LinkedHashSet<>();
     }
 

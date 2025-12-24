@@ -1,113 +1,65 @@
 package de.t14d3.rapunzelcore;
 
+import de.t14d3.rapunzellib.Rapunzel;
+import de.t14d3.rapunzellib.message.MessageFormatService;
+import de.t14d3.rapunzellib.message.Placeholders;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.minimessage.tag.Tag;
-import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
-import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 public class MessageHandler {
-    private final Map<String, String> rawMessages = new HashMap<>();
-    private final Map<String, Component> cachedMessages = new HashMap<>();
-    private final MiniMessage mm = MiniMessage.miniMessage();
 
-    public MessageHandler(RapunzelCore core) {
-        reloadMessages(core);
+    public MessageHandler() {
+        reloadMessages();
     }
 
-    public void reloadMessages(RapunzelCore core) {
-        rawMessages.clear();
-        cachedMessages.clear();
-        File messagesFile = new File(core.getDataFolder(), "messages.properties");
-        Properties messagesConfig = new Properties();
-        try {
-            messagesConfig.load(new FileInputStream(messagesFile));
-        } catch (Exception e) {
-            RapunzelCore.getLogger().warn("Failed to load messages.properties: {}", e.getMessage());
-        }
-        updateMessages(messagesConfig);
-        messagesConfig.keySet().forEach(key -> {
-            String raw = messagesConfig.getProperty(key.toString());
-            rawMessages.put(key.toString(), raw);
-            cachedMessages.put(key.toString(), mm.deserialize(raw));
-        });
-    }
-
-    private void updateMessages(Properties currentMessages) {
-        Properties defaultMessages = new Properties();
-        try {
-            defaultMessages.load(getClass().getResourceAsStream("/messages.properties"));
-        } catch (Exception e) {
-            RapunzelCore.getLogger().warn("Failed to load default messages.properties: {}", e.getMessage());
-        }
-        AtomicInteger changes = new AtomicInteger();
-        defaultMessages.keySet().forEach(key -> {
-            String raw = defaultMessages.getProperty(key.toString());
-            if (!currentMessages.containsKey(key.toString())) {
-                currentMessages.put(key.toString(), raw);
-                changes.getAndIncrement();
-            }
-        });
-        RapunzelCore.getLogger().info("Updated {} messages", changes.get());
-        try {
-            currentMessages.store(new FileOutputStream(RapunzelCore.getInstance().getDataFolder() + "/messages.properties"), "");
-        } catch (Exception e) {
-            RapunzelCore.getLogger().warn("Failed to save messages.properties: {}", e.getMessage());
-        }
-
+    public void reloadMessages() {
+        messages().reload();
     }
 
     public Component getMessage(String key) {
-        Component message = cachedMessages.get(key);
-        if (message == null) {
-            return Component.text("No message found for key: " + key);
-        }
-        return message;
+        return messages().component(key);
     }
 
+    public Component getMessage(String key, Placeholders placeholders) {
+        Objects.requireNonNull(placeholders, "placeholders");
+        return messages().component(key, placeholders);
+    }
+
+    public Component getMessage(String key, Consumer<Placeholders.Builder> builder) {
+        Objects.requireNonNull(builder, "builder");
+        Placeholders.Builder ph = Placeholders.builder();
+        builder.accept(ph);
+        return getMessage(key, ph.build());
+    }
 
     public Component getMessage(String key, String arg1) {
-        String raw = rawMessages.get(key);
-        if (raw == null) {
-            return Component.text("No message found for key: " + key);
-        }
-        return mm.deserialize(raw, Placeholder.parsed("arg1", arg1));
+        return getMessage(key, new String[]{arg1});
     }
 
     public Component getMessage(String key, String... args) {
-        String raw = rawMessages.get(key);
-        if (raw == null) {
-            return Component.text("No message found for key: " + key);
-        }
-        TagResolver[] resolvers = new TagResolver[args.length];
-        for (int i = 0; i < args.length; i++) {
-            resolvers[i] = Placeholder.parsed("arg" + (i + 1), args[i]);
-        }
-        return mm.deserialize(raw, resolvers);
+        return getMessage(key, ph -> {
+            for (int i = 0; i < args.length; i++) {
+                ph.string("arg" + (i + 1), args[i]);
+            }
+        });
     }
 
     public Component getMessage(String key, Component... args) {
-        String raw = rawMessages.get(key);
-        if (raw == null) {
-            return Component.text("No message found for key: " + key);
-        }
-        TagResolver[] resolvers = new TagResolver[args.length];
-        for (int i = 0; i < args.length; i++) {
-            String placeholder = "arg" + (i + 1);
-            resolvers[i] = TagResolver.resolver(placeholder, Tag.inserting(args[i]));
-        }
-        return mm.deserialize(raw, resolvers);
+        return getMessage(key, ph -> {
+            for (int i = 0; i < args.length; i++) {
+                ph.component("arg" + (i + 1), args[i]);
+            }
+        });
     }
 
     public String getRaw(String key) {
-        return rawMessages.get(key);
+        return messages().raw(key);
+    }
+
+    private static MessageFormatService messages() {
+        return Rapunzel.context().messages();
     }
 }
+

@@ -3,7 +3,7 @@ package de.t14d3.rapunzelcore.modules.chat;
 import de.t14d3.rapunzelcore.Environment;
 import de.t14d3.rapunzelcore.RapunzelCore;
 import de.t14d3.rapunzelcore.Module;
-import org.simpleyaml.configuration.file.FileConfiguration;
+import de.t14d3.rapunzellib.config.YamlConfig;
 
 import java.util.Map;
 
@@ -13,7 +13,7 @@ import java.util.Map;
  */
 public class ChatModule implements Module {
     private boolean enabled = false;
-    private FileConfiguration config;
+    private YamlConfig config;
     private ChannelManager channelManager;
     private static String[] iconConfig;
     private static String defaultFormat;
@@ -49,13 +49,17 @@ public class ChatModule implements Module {
     @Override
     public void disable(RapunzelCore core, Environment environment) {
         if (!enabled) return;
-        
+
         if (chatImpl != null) {
             chatImpl.cleanup();
         }
-        
+        if (channelManager != null) {
+            channelManager.close();
+        }
+
         enabled = false;
         chatImpl = null;
+        channelManager = null;
     }
 
     @Override

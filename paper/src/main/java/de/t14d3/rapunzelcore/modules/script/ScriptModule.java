@@ -4,15 +4,15 @@ import de.t14d3.rapunzelcore.Environment;
 import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.RapunzelCore;
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
+import de.t14d3.rapunzellib.config.YamlConfig;
 import dev.jorel.commandapi.CommandAPI;
-import org.simpleyaml.configuration.file.FileConfiguration;
 
 import java.util.Map;
 
 public class ScriptModule implements Module {
     private ScriptManager scriptManager;
     private boolean enabled = false;
-    private FileConfiguration config;
+    private YamlConfig config;
 
     @Override
     public Environment getEnvironment() {
@@ -73,7 +73,7 @@ public class ScriptModule implements Module {
         return scriptManager;
     }
 
-    public FileConfiguration getConfig() {
+    public YamlConfig getConfig() {
         return config;
     }
 }

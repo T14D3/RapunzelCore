@@ -1,12 +1,12 @@
 package de.t14d3.rapunzelcore;
 
 
-import org.simpleyaml.configuration.file.FileConfiguration;
-import org.simpleyaml.configuration.file.YamlConfiguration;
+import de.t14d3.rapunzellib.Rapunzel;
+import de.t14d3.rapunzellib.config.YamlConfig;
 
-import java.io.*;
 import java.util.Collections;
 import java.util.Map;
+import java.nio.file.Path;
 
 /**
  * Core module interface that can be implemented by modules across all platforms.
@@ -63,25 +63,11 @@ public interface Module {
 
 
     /**
-     * Load the configuration for this module.
-     *
-     * @return The loaded configuration
+     * Returns the file path for this module's YAML config.
      */
-    default File getConfigFile() {
+    default Path getConfigPath() {
         RapunzelCore core = RapunzelCore.getInstance();
-        File modulesDir = new File(core.getDataFolder(), "modules");
-        if (!modulesDir.exists()) {
-            modulesDir.mkdirs();
-        }
-        File configFile = new File(modulesDir, getName() + ".yaml");
-        if (!configFile.exists()) {
-            try {
-                configFile.createNewFile();
-            } catch (IOException e) {
-                RapunzelCore.getLogger().error("Failed to create config file for module " + getName() + ": " + e.getMessage());
-            }
-        }
-        return configFile;
+        return core.getDataFolder().toPath().resolve("modules").resolve(getName() + ".yaml");
     }
 
     /**
@@ -90,26 +76,9 @@ public interface Module {
      * @return The loaded configuration
      */
 
-    default FileConfiguration loadConfig() {
-        FileConfiguration config;
-        try {
-            File configFile = getConfigFile();
-            //noinspection DataFlowIssue
-            FileConfiguration defaultConfig = YamlConfiguration.loadConfiguration(
-                    new InputStreamReader(getClass().getResourceAsStream("/modules/" + getName() + ".yaml"))
-            );
-            config = YamlConfiguration.loadConfiguration(configFile);
-            defaultConfig.getKeys(true).forEach(key -> {
-                if (!config.contains(key)) {
-                    config.set(key, defaultConfig.get(key));
-                }
-            });
-        } catch (IOException e) {
-            RapunzelCore.getLogger().error("Failed to load config for module {}: {}", getName(), e.getMessage());
-            return null;
-        }
-        saveConfig(config);
-        return config;
+    default YamlConfig loadConfig() {
+        String defaultResource = "modules/" + getName() + ".yaml";
+        return Rapunzel.context().configs().load(getConfigPath(), defaultResource);
     }
 
     /**
@@ -117,12 +86,7 @@ public interface Module {
      *
      * @param config The configuration to save
      */
-    default void saveConfig(FileConfiguration config) {
-        File configFile = getConfigFile();
-        try {
-            config.save(configFile);
-        } catch (IOException e) {
-            RapunzelCore.getLogger().error("Failed to save config for module {}: {}", getName(), e.getMessage());
-        }
+    default void saveConfig(YamlConfig config) {
+        if (config != null) config.save();
     }
 }

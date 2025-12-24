@@ -3,6 +3,7 @@ package de.t14d3.rapunzelcore.modules.chat;
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
 import de.t14d3.rapunzelcore.database.CoreDatabase;
 import de.t14d3.rapunzelcore.database.entities.Channel;
+import de.t14d3.rapunzelcore.database.entities.PlayerEntity;
 import de.t14d3.rapunzelcore.database.entities.PlayerRepository;
 import de.t14d3.rapunzelcore.util.Utils;
 import dev.jorel.commandapi.CommandAPICommand;
@@ -81,7 +82,7 @@ public class ChatCommands {
                 .withPermission("rapunzelcore.socialspy")
                 .executes((executor, args) -> {
                     if (!(executor instanceof Player sender)) return 1;
-                    de.t14d3.rapunzelcore.database.entities.Player senderEntity = Utils.player(sender);
+                    PlayerEntity senderEntity = Utils.player(sender);
                     boolean enabled = senderEntity.isSocialSpyEnabled();
                     senderEntity.setSocialSpyEnabled(!enabled);
                     CoreDatabase.runLocked(() -> PlayerRepository.getInstance().save(senderEntity));
@@ -102,7 +103,7 @@ public class ChatCommands {
         CommandAPICommand listSub = new CommandAPICommand("list")
                 .executes((executor, args) -> {
                     if (!(executor instanceof Player sender)) return 1;
-                    de.t14d3.rapunzelcore.database.entities.Player senderEntity = Utils.player(sender);
+                    PlayerEntity senderEntity = Utils.player(sender);
                     StringBuilder channelsList = new StringBuilder();
                     for (Channel channel : channelManager.getAllowedChannels(senderEntity).values()) {
                         channelsList.append(channel.getName()).append(", ");
@@ -121,7 +122,7 @@ public class ChatCommands {
                         new StringArgument("channel")
                                 .replaceSuggestions((info, builder) -> {
                                     if (info.sender() instanceof Player sender) {
-                                        de.t14d3.rapunzelcore.database.entities.Player senderEntity = Utils.player(sender);
+                                        PlayerEntity senderEntity = Utils.player(sender);
                                         channelManager.getAllowedChannels(senderEntity).forEach((name, channel) -> builder.suggest(name));
                                     }
                                     return builder.buildFuture();
@@ -129,7 +130,7 @@ public class ChatCommands {
                 )
                 .executes((executor, args) -> {
                     if (!(executor instanceof Player sender)) return 1;
-                    de.t14d3.rapunzelcore.database.entities.Player senderEntity = Utils.player(sender);
+                    PlayerEntity senderEntity = Utils.player(sender);
                     String channelArg = (String) args.get("channel");
                     if (channelArg == null || channelArg.isEmpty()) {
                         sender.sendMessage(Component.text("Usage: /channel join <name>").color(NamedTextColor.RED));
@@ -158,7 +159,7 @@ public class ChatCommands {
                         new StringArgument("channel")
                                 .replaceSuggestions((info, builder) -> {
                                     if (info.sender() instanceof Player sender) {
-                                        de.t14d3.rapunzelcore.database.entities.Player senderEntity = Utils.player(sender);
+                                        PlayerEntity senderEntity = Utils.player(sender);
                                         channelManager.getJoinedChannels(senderEntity).stream()
                                             .map(Channel::getName)
                                             .forEach(builder::suggest);
@@ -168,7 +169,7 @@ public class ChatCommands {
                 )
                 .executes((executor, args) -> {
                     if (!(executor instanceof Player sender)) return 1;
-                    de.t14d3.rapunzelcore.database.entities.Player senderEntity = Utils.player(sender);
+                    PlayerEntity senderEntity = Utils.player(sender);
                     String channelArg = (String) args.get("channel");
                     if (channelArg == null || channelArg.isEmpty()) {
                         sender.sendMessage(Component.text("Usage: /channel leave <name>").color(NamedTextColor.RED));
@@ -193,7 +194,7 @@ public class ChatCommands {
                         new StringArgument("channel")
                                 .replaceSuggestions((info, builder) -> {
                                     if (info.sender() instanceof Player sender) {
-                                        de.t14d3.rapunzelcore.database.entities.Player senderEntity = Utils.player(sender);
+                                        PlayerEntity senderEntity = Utils.player(sender);
                                         channelManager.getJoinedChannels(senderEntity).stream()
                                             .map(Channel::getName)
                                             .forEach(builder::suggest);
@@ -203,7 +204,7 @@ public class ChatCommands {
                 )
                 .executes((executor, args) -> {
                     if (!(executor instanceof Player sender)) return 1;
-                    de.t14d3.rapunzelcore.database.entities.Player senderEntity = Utils.player(sender);
+                    PlayerEntity senderEntity = Utils.player(sender);
                     String channelArg = (String) args.get("channel");
                     if (channelArg == null || channelArg.isEmpty()) {
                         sender.sendMessage(plugin.getMessageHandler().getMessage("commands.channel.error.main", ""));
@@ -228,7 +229,7 @@ public class ChatCommands {
                         new StringArgument("channel")
                                 .replaceSuggestions((info, builder) -> {
                                     if (info.sender() instanceof Player sender) {
-                                        de.t14d3.rapunzelcore.database.entities.Player senderEntity = Utils.player(sender);
+                                        PlayerEntity senderEntity = Utils.player(sender);
                                         channelManager.getAllowedChannels(senderEntity).keySet().forEach(builder::suggest);
                                     }
                                     return builder.buildFuture();
@@ -237,7 +238,7 @@ public class ChatCommands {
                 )
                 .executes((executor, args) -> {
                     if (!(executor instanceof Player sender)) return 1;
-                    de.t14d3.rapunzelcore.database.entities.Player senderEntity = Utils.player(sender);
+                    PlayerEntity senderEntity = Utils.player(sender);
                     String channelArg = (String) args.get("channel");
                     String messageArg = (String) args.get("message");
                     if (channelArg == null || channelArg.isEmpty() || messageArg == null || messageArg.isEmpty()) {

@@ -1,6 +1,7 @@
 package de.t14d3.rapunzelcore.database.entities;
 
-import de.t14d3.rapunzelcore.RapunzelCore;
+import de.t14d3.rapunzellib.Rapunzel;
+import de.t14d3.rapunzellib.objects.Players;
 import de.t14d3.spool.annotations.*;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -13,13 +14,13 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "players")
-public class Player {
+public class PlayerEntity {
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Player player)) return false;
-        return uuid != null && uuid.equals(player.uuid);
+        if (!(o instanceof PlayerEntity playerEntity)) return false;
+        return uuid != null && uuid.equals(playerEntity.uuid);
     }
 
     @Override
@@ -39,7 +40,7 @@ public class Player {
     @Column(name = "name", nullable = true)
     private String name = "";
 
-    @OneToMany(targetEntity = Home.class, mappedBy = "player", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(targetEntity = Home.class, mappedBy = "playerEntity", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Home> homes = new ArrayList<>();
 
     @Column(name = "tp_toggle", nullable = false, type = "BOOLEAN")
@@ -63,7 +64,7 @@ public class Player {
         return homes;
     }
 
-    public Player() {}
+    public PlayerEntity() {}
 
     public void setDisplayName(Component displayName) {
         this.displayName = PLAIN_SERIALIZER.serialize(displayName);
@@ -116,7 +117,11 @@ public class Player {
     }
 
     public void sendMessage(Component message) {
-        RapunzelCore.getInstance().getPlatformManager().sendMessage(this, message);
+        if (!Rapunzel.isBootstrapped()) return;
+        UUID id = getUuid();
+        if (id == null) return;
+        Players players = Rapunzel.context().services().get(Players.class);
+        players.get(id).ifPresent(p -> p.sendMessage(message));
     }
 
     public UUID getUuid() {
@@ -133,6 +138,10 @@ public class Player {
     }
 
     public boolean hasPermission(String permission) {
-        return RapunzelCore.getInstance().getPlatformManager().hasPermission(this, permission);
+        if (!Rapunzel.isBootstrapped()) return false;
+        UUID id = getUuid();
+        if (id == null) return false;
+        Players players = Rapunzel.context().services().get(Players.class);
+        return players.get(id).map(p -> p.hasPermission(permission)).orElse(false);
     }
 }

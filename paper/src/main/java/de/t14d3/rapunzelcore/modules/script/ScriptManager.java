@@ -15,8 +15,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.RegisteredServiceProvider;
-import org.simpleyaml.configuration.ConfigurationSection;
-import org.simpleyaml.configuration.file.FileConfiguration;
+import de.t14d3.rapunzellib.config.YamlConfig;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -271,21 +270,25 @@ public class ScriptManager {
         }
     }
 
-    public void loadAliases(FileConfiguration config) {
-        for (String key : config.getKeys(false)) {
-            if (config.isConfigurationSection(key)) {
-                ConfigurationSection section = config.getConfigurationSection(key);
-                if (section == null) continue;
-                String script = section.getString("script");
-                String permission = section.getString("permission");
-                if (script == null) continue;
-                script = convertLegacyToMiniMessage(script);
+    public void loadAliases(YamlConfig config) {
+        for (String key : config.keys(false)) {
+            Object raw = config.get(key);
+            if (raw instanceof Map) {
+                Map<?, ?> map = (Map<?, ?>) raw;
+                Object scriptRaw = map.get("script");
+                if (!(scriptRaw instanceof String)) continue;
+                String script = convertLegacyToMiniMessage((String) scriptRaw);
+
+                Object permissionRaw = map.get("permission");
+                String permission = permissionRaw instanceof String ? (String) permissionRaw : null;
+
                 aliases.put(key, new AliasData(script, permission));
                 registerAliasCommand(key);
-            } else {
-                String script = config.getString(key);
-                if (script == null) continue;
-                script = convertLegacyToMiniMessage(script);
+                continue;
+            }
+
+            if (raw instanceof String) {
+                String script = convertLegacyToMiniMessage((String) raw);
                 aliases.put(key, new AliasData(script, null));
                 registerAliasCommand(key);
             }
@@ -295,11 +298,11 @@ public class ScriptManager {
 
 
     public void saveAliases() {
-        FileConfiguration config = ((ScriptModule) module).getConfig();
-        for (String key : config.getKeys(false)) {
+        YamlConfig config = ((ScriptModule) module).getConfig();
+        for (String key : new HashSet<>(config.keys(false))) {
             config.set(key, null);
         }
-        for (Map.Entry<String, AliasData> entry : aliases.entrySet()) {
+        for (Map.Entry<String, AliasData> entry : aliases.entrySet()) {    
             Map<String, Object> map = new HashMap<>();
             map.put("script", entry.getValue().script);
             map.put("permission", entry.getValue().permission);
