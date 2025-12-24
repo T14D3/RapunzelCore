@@ -1,0 +1,60 @@
+# Module configuration
+# Set to false to disable specific modules
+modules:
+  script: true
+  joinleave: true
+  interaction: true
+  shulker: true
+  warps: false
+  homes: false
+  teamchat: true
+  commands: true
+  teleports: true
+  chat: true
+
+# Network / messaging configuration
+network:
+  # One of: plugin, redis
+  # - plugin: Paper/Velocity plugin messaging (requires a player connection to send/forward; see network.queue)
+  # - redis: Redis Pub/Sub transport (no player connection required)
+  transport: "plugin"
+
+  # Name of this server in the network (Velocity backend name). Required for redis transport.
+  # You can also set this via env var RAPUNZEL_SERVER_NAME.
+  serverName: ""
+
+  # Name of the proxy server (Velocity). Also available via env var RAPUNZEL_PROXY_SERVER_NAME.
+  proxyServerName: "velocity"
+
+  redis:
+    host: "127.0.0.1"
+    port: 6379
+    ssl: false
+    username: ""
+    password: ""
+    # Redis Pub/Sub channel used for RapunzelLib network envelopes.
+    transportChannel: "rapunzellib:bridge"
+    connectTimeoutMillis: 2000
+    socketTimeoutMillis: 5000
+    reconnectDelayMillis: 2000
+    # Optional: override Redis CLIENT SETNAME (defaults to rapunzellib-<serverName>)
+    clientName: ""
+
+  # Optional: DB-backed outbox for plugin messaging.
+  # When enabled, selected channels are persisted if they can't be delivered immediately (e.g. no player-carrier),
+  # and retried periodically.
+  queue:
+    enabled: true
+    flushPeriodSeconds: 2
+    maxBatchSize: 200
+    # Drop queued messages older than this (helps avoid delivering stale events).
+    maxAgeSeconds: 300
+    # Only these channels are queued (others keep best-effort semantics).
+    allowlist:
+      - "rapunzellib:filesync:invalidate"
+      - "db.cache_event"
+
+# Database configuration
+database:
+  # JDBC connection string
+  jdbc: "jdbc:sqlite:plugins/RapunzelCore/rapunzelcore.db"

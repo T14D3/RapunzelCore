@@ -1,0 +1,47 @@
+[versions]
+shadow = "9.0.0-beta8"
+run-paper = "2.0.1"
+rapunzellib = "0.1.2-SNAPSHOT"
+paperweight = "2.0.0-beta.19"
+
+spool = "1.2-SNAPSHOT"
+gson = "2.10.1"
+reflections = "0.10.2"
+mysql-driver = "9.3.0"
+slf4j = "2.0.7"
+adventure = "4.25.0"
+
+minecraft = "1.21.10"
+paper-dev-bundle = "1.21.10-R0.1-SNAPSHOT"
+commandapi = "11.1.0"
+velocity-api = "3.4.0-SNAPSHOT"
+
+[libraries]
+spool = { module = "de.t14d3:spool", version.ref = "spool" }
+
+rapunzellib-api = { module = "de.t14d3.rapunzellib:api", version.ref = "rapunzellib" }
+rapunzellib-network = { module = "de.t14d3.rapunzellib:network", version.ref = "rapunzellib" }
+rapunzellib-database-spool = { module = "de.t14d3.rapunzellib:database-spool", version.ref = "rapunzellib" }
+rapunzellib-platform-paper = { module = "de.t14d3.rapunzellib:platform-paper", version.ref = "rapunzellib" }
+rapunzellib-platform-velocity = { module = "de.t14d3.rapunzellib:platform-velocity", version.ref = "rapunzellib" }
+
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+reflections = { module = "org.reflections:reflections", version.ref = "reflections" }
+mysql-driver = { module = "com.mysql:mysql-connector-j", version.ref = "mysql-driver" }
+
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+
+
+adventure-api = { module = "net.kyori:adventure-api", version.ref = "adventure" }
+adventure-text-minimessage = { module = "net.kyori:adventure-text-minimessage", version.ref = "adventure" }
+adventure-text-serializer-plain = { module = "net.kyori:adventure-text-serializer-plain", version.ref = "adventure" }
+
+commandapi-paper-shade = { module = "dev.jorel:commandapi-paper-shade", version.ref = "commandapi" }
+velocity-api = { module = "com.velocitypowered:velocity-api", version.ref = "velocity-api" }
+
+[plugins]
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
+run-paper = { id = "xyz.jpenilla.run-paper", version.ref = "run-paper" }
+rapunzellib = { id = "de.t14d3.rapunzellib", version.ref = "rapunzellib" }
+paperweight-userdev = { id = "io.papermc.paperweight.userdev", version.ref = "paperweight" }

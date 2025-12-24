@@ -1,0 +1,19 @@
+name: RapunzelCore
+version: '0.0.1'
+main: de.t14d3.rapunzelcore.RapunzelPaperCore
+api-version: '1.21'
+prefix: 'RapunzelCore'
+authors: [T14D3]
+permissions:
+  rapunzelcore.admin:
+    description: Access to all RapunzelCore core commands.
+    default: op
+    children:
+      rapunzelcore.reload: true
+      rapunzelcore.modules: true
+  rapunzelcore.reload:
+    description: Reload RapunzelCore configuration and messages.
+    default: op
+  rapunzelcore.modules:
+    description: Manage RapunzelCore modules.
+    default: op

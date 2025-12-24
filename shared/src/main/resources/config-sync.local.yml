@@ -1,0 +1,53 @@
+# Local-only config sync settings (this file should NOT be synced).
+configSync:
+  enabled: false
+
+  # One of: AUTHORITY, FOLLOWER
+  role: FOLLOWER
+
+  # The directory to sync (relative to the plugin data folder).
+  root: "."
+
+  # Glob patterns (relative to `root`) to include/exclude.
+  # If `includes` is empty, defaults to: ["config.yml", "modules/**", "messages.yml"]
+  # If `excludes` is empty, defaults to: ["config-sync.local.yml"]
+  includes: []
+  excludes: []
+
+  # Required for FOLLOWER: Velocity backend server name of the authority (e.g. "paper-1")
+  authorityServerName: ""
+
+  # When the AUTHORITY broadcasts an invalidate, FOLLOWERs will automatically request and apply the update.
+  autoRequestOnInvalidate: true
+
+  # If true, delete files that exist on the follower but not on the authority (within the included set).
+  deleteExtraneous: false
+
+  # FOLLOWER: do a pull-sync after startup.
+  syncOnStartup: true
+
+  apply:
+    # If true, call RapunzelCore#reloadPlugin after applying updates.
+    autoReload: true
+    reloadDelayMs: 250
+
+  timeouts:
+    requestSeconds: 5
+    transferSeconds: 20
+
+  transfer:
+    # Chunk size for transports with small limits (plugin messaging). Keep this well below 32KB.
+    maxChunkBytes: 8192
+    # Safety guard against accidentally syncing huge payloads.
+    maxPayloadBytes: 5242880
+
+  watch:
+    # AUTHORITY: watch the `root` folder and broadcast invalidates on matching file changes.
+    enabled: true
+    debounceMs: 1000
+
+  schedule:
+    enabled: false
+    periodSeconds: 60
+    # "broadcast" (AUTHORITY) or "pull" (FOLLOWER). Blank defaults to broadcast for AUTHORITY, pull for FOLLOWER.
+    mode: ""

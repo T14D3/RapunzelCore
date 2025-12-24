@@ -1,0 +1,225 @@
+prefix: ""
+commands:
+  broadcast:
+    format: "<gray>[Broadcast] <gray><arg1>"
+  back:
+    error:
+      no_location: "<red>You have no last location set."
+    success: "<green>Teleported back to your last location."
+  enderchest:
+    error:
+      modify: "<red>You cannot modify the other player's enderchest!"
+      permission: "<red>You do not have permission to view the other player's enderchest!"
+  fly:
+    error:
+      invalid: "<red>Invalid player!"
+    toggle: "<green>Fly mode <arg2> for <gold><arg1>."
+  flyspeed:
+    error:
+      invalid: "<red>Invalid player!"
+    set: "<green>Fly speed set to <gold><arg1>"
+  gm:
+    error:
+      invalid: "<red>Invalid player!"
+    success: "<green>Gamemode of <gold><arg1> <green>set to <gold><arg2>"
+  invsee:
+    error:
+      invalid: "<red>Invalid player!"
+      self: "<red>You cannot see your own inventory!"
+      target_offline: "<red>Target player is offline."
+    opened: "<green>Opened inventory of <gold><arg1>"
+    closed: "<green>Closed inventory of <gold><arg1>"
+  msg:
+    format:
+      sender: "<gray>[<gold><arg1><gray>] <gray><arg2>"
+      target: "<gray>[<gold><arg1><gray>] <gray><arg2>"
+    error:
+      invalid: "<red>Invalid player!"
+  nick:
+    reset: "<green>Nickname of <gold><arg1> <green>reset to <gold><arg1>"
+    set: "<green>Nickname of <gold><arg1> <green>set to <gold><arg2>"
+  ping:
+    error:
+      invalid: "<red>Invalid player!"
+    success: "<green>Ping: <gold><arg1>ms"
+  playtime:
+    success: "<green>Playtime of <gold><arg1> <green>is <gold><arg2>"
+  repair:
+    success: "<green>Repaired <gold><arg1> <green>for <gold><arg2>"
+  socialspy:
+    toggle: "<green>Social spy mode <gold><arg1>"
+    message: "<gray>[Social Spy] <gray><arg1> -> <gray><arg2> <white><arg3>"
+  speed:
+    set: "<green>Speed set to <gold><arg1>"
+  vanish:
+    error:
+      invalid: "<red>Invalid player!"
+    toggle: "<green>Vanish mode <gold><arg1>"
+    fakemessage:
+      join:
+        broadcast: "<gray>[<green>+<gray>] <gray><arg1>"
+        see: "<gold><arg1> <gray> hat den Vanish Modus deaktiviert."
+      leave:
+        broadcast: "<gray>[<red>-<gray>] <gray><arg1>"
+        see: "<gold><arg1> <gray> hat den Vanish Modus aktiviert."
+    list: "<gray>Diese Spieler sind aktuell im Vanish: <gold><arg1>"
+  uinfo:
+    error:
+      invalid: "<red>Invalid player!"
+    player: "<green>player: <gold><arg1>"
+    uuid: "<green>UUID: <gold><arg1>"
+    firstplayed: "<green>First Played: <gold><arg1>"
+    lastseen: "<green>Last Seen: <gold><arg1>"
+    location: "<green>Location: <gold><arg1>, <arg2>, <arg3>"
+    gamemode: "<green>Gamemode: <gold><arg1>"
+    health: "<green>Health: <gold><arg1>/<arg2>"
+    food: "<green>Food: <gold><arg1>"
+    saturation: "<green>Saturation: <gold><arg1>"
+    level: "<green>Level: <gold><arg1>"
+    world: "<green>World: <gold><arg1>"
+  restart:
+    error:
+      invalid: "<red>Invalid time provided: <arg1>"
+      none: "<red>No restart scheduled."
+    started: "<green>Server will restart in <gold><arg1> <green>seconds."
+    tick: "<gold><bold>[Restart]</bold><green> Server will restart in <gold><arg1> <green>seconds."
+    cancelled: "<green>Restart canceled."
+    complete: "<green>Server restart completed."
+  maintenance:
+    error:
+      invalid: "<red>Invalid argument: <arg1>"
+    status: "<green>Maintenance mode <gold><arg1>"
+    kick: "<red>Server is currently under maintenance."
+  reload:
+    success: "<green>Core plugin reloaded successfully!"
+  configsync:
+    disabled: "<red>Config sync is disabled on this server."
+    status: "<gray>Config sync role: <gold><arg1>"
+    broadcasted: "<green>Broadcasted config sync update."
+    sync:
+      started: "<gray>Requesting config sync..."
+      success: "<green>Config sync applied (<gold><arg1><green> written, <gold><arg2><green> deleted)."
+      error: "<red>Config sync failed: <arg1>"
+  god:
+    success: "<green>God mode <gold><arg1> for <gold><arg2>"
+  heal:
+    success: "<green>You have been healed."
+  channel:
+    list: "<green>Available channels: <gold><arg1>"
+    main: "<green>Main channel set to: <gold><arg1>"
+    joined: "<green>Joined channel: <gold><arg1>"
+    left: "<green>Left channel: <gold><arg1>"
+    error:
+      notfound: "<red>Channel '<gold><arg1><red>' not found."
+      nopermission: "<red>You do not have permission to use channel '<gold><arg1><red>'."
+      join: "<red>Could not join channel '<gold><arg1><red>'."
+      leave: "<red>Could not leave channel '<gold><arg1><red>'."
+      main: "<red>Could not set main channel to '<gold><arg1><red>'."
+      send: "<red>Could not send message to channel '<gold><arg1><red>'."
+teleports:
+  home:
+    error:
+      no_home: "<red>You have no home set called '<gold><arg1><red>'."
+    success: "<green>Teleported to home '<gold><arg1><green>'."
+  sethome:
+    success: "<green>Home '<gold><arg1><green>' set."
+    error:
+      limit_reached: "<red>You have reached the maximum number of homes (<gold><arg1><red>)."
+    limit_reached: "<green>You have reached the maximum number of homes."
+    remaining: "<gray>You have <gold><arg1> <gray>homes remaining."
+    updated: "<green>Home '<gold><arg1><green>' updated."
+  delhome:
+    error:
+      no_home: "<red>You have no home set called '<gold><arg1><red>'."
+    success: "<green>Home '<gold><arg1><green>' deleted."
+  homes:
+    error:
+      none: "<red>You have no homes set."
+    header: "<green>Your homes:"
+    entry: "<gray>- <gold><arg1> <gray>(<gold><arg2>, <arg3>, <arg4><gray>)"
+  warp:
+    error:
+      invalid: "<red>Warp '<gold><arg1><red>' does not exist."
+      no_permission: "<red>You do not have permission to use warp '<gold><arg1><red>'."
+    success: "<green>Teleported to warp '<gold><arg1><green>'."
+  setwarp:
+    success: "<green>Warp '<gold><arg1><green>' set."
+  delwarp:
+    error:
+      invalid: "<red>Warp '<gold><arg1><red>' does not exist."
+    success: "<green>Warp '<gold><arg1><green>' deleted."
+  warps:
+    error:
+      none: "<red>No warps available."
+    header: "<green>Available warps:"
+    entry: "<gray>- <gold><arg1> <gray>(<gold><arg2>, <arg3>, <arg4><gray>)"
+    permission: "<gray> (Requires: <gold><arg1><gray>)"
+  spawn:
+    success: "<green>Teleported to spawn."
+  setspawn:
+    success: "<green>Spawn set."
+  tpaccept:
+    error:
+      multiple_requests: "<red>You have multiple teleport requests. Please specify a player name."
+      no_request_from: "<red>You have no teleport request from <gold><arg1><red>."
+      no_request: "<red>You have no teleport request."
+    list_entry: "<gray>- <gold><arg1>"
+    accepted: "<green>Teleport request from <gold><arg1> <green>accepted."
+    accepted_by: "<green>Teleport request from <gold><arg1> <green>accepted by <gold><arg2>"
+  tpdeny:
+    error:
+      multiple_requests: "<red>You have multiple teleport requests. Please specify a player name."
+      no_request_from: "<red>You have no teleport request from <gold><arg1><red>."
+      no_request: "<red>You have no teleport request from <gold><arg1><red>."
+    list_entry: "<gray>- <gold><arg1>"
+    denied: "<red>Teleport request denied."
+    denied_request: "<red>Denied teleport request from <gold><arg1><red>."
+  tpo:
+    success: "<green>Teleported to <gold><arg1>"
+  tpohere:
+    success: "<green>Teleported <gold><arg1> <green>to your location."
+  tpa:
+    error:
+      self: "<red>You cannot send a teleport request to yourself!"
+      toggled: "<red><gold><arg1> <red>has teleport requests disabled."
+    expired: "<red>Your teleport request to <gold><arg1> <red>has expired."
+    received: "<gold><arg1> <green>wants to teleport to you. Type /tpaccept to accept."
+    sent: "<green>Teleport request sent to <gold><arg1><green>."
+  tpahere:
+    received: "<gold><arg1> <green>wants you to teleport to them. Type /tpaccept to accept."
+    sent: "<green>Teleport request sent to <gold><arg1><green>."
+  tphere:
+    success: "<green>Teleported <gold><arg1> <green>to your location."
+    teleported_by: "<green>You were teleported by <gold><arg1><green>."
+  tptoggle:
+    toggled: "<green>Teleport requests <gold><arg1>"
+script:
+  permission:
+    denied: "<red>You don't have permission to use all blocks in this script.</red>"
+alias:
+  permission:
+    denied: "<red>You don't have permission to use this alias.</red>"
+    cleared: "Permission cleared."
+    set: "Permission set to: <arg1>"
+  line:
+    updated: "Line updated."
+    added: "Line added."
+    removed: "Line removed."
+  removed: "<red>Alias removed: <arg1></red>"
+  list:
+    empty: "No aliases defined."
+    header: "Aliases:"
+  editor:
+    header: "<gold>Editing alias: <arg1></gold>"
+  not:
+    found: "Alias not found."
+general:
+  toggle:
+    "on": "<green>Enabled"
+    "off": "<red>Disabled"
+  error:
+    player:
+      invalid: "<red><arg1> is not a valid player!"
+      offline: "<red>player is offline!"
+  component:
+    item: "<icon> <gold>[<white><name> x<amount><gold>]"
