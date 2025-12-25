@@ -5,6 +5,7 @@ import de.t14d3.rapunzellib.network.Messenger;
 import de.t14d3.rapunzellib.config.YamlConfig;
 import de.t14d3.rapunzelcore.modules.chat.ChannelManager;
 import de.t14d3.rapunzelcore.modules.chat.ChatModule;
+import de.t14d3.rapunzelcore.modules.JoinLeaveModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,6 +106,7 @@ public interface RapunzelCore {
 
     interface PlatformManager {
         ChatModule.ChatModuleImpl createChatModuleImpl(RapunzelCore core, ChannelManager channelManager);
+        JoinLeaveModule.JoinLeaveModuleImpl createJoinLeaveModuleImpl(RapunzelCore core, boolean networkEnabled, java.nio.file.Path configPath);
 
         /**
          * Registers the given permissions with the underlying platform, if supported.

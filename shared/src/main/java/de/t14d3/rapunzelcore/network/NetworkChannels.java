@@ -15,4 +15,5 @@ public final class NetworkChannels {
     public static final String TELEPORTS_PROXY = "teleports.proxy";
     public static final String TELEPORTS_BACKEND = "teleports.backend";
     public static final String DB_CACHE_EVENT = "db.cache_event";
+    public static final String JOIN_LEAVE_BROADCAST = "joinleave.broadcast";
 }

@@ -7,6 +7,7 @@ dependencies {
     implementation(project(":shared"))
     implementation(libs.rapunzellib.platform.velocity)
     implementation(libs.rapunzellib.network)
+    implementation(libs.rapunzellib.common)
     implementation(libs.rapunzellib.database.spool)
 
     // Velocity API

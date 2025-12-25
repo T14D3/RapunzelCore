@@ -1,0 +1,7 @@
+
+network:
+  # If true, backends will suppress their own join/leave broadcasts when a proxy announces itself.
+  enabled: true
+
+join-message: "<gray>[<green>+<gray>] <white><player>"
+leave-message: "<gray>[<red>-<gray>] <white><player>"

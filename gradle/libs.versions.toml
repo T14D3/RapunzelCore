@@ -20,6 +20,7 @@ velocity-api = "3.4.0-SNAPSHOT"
 spool = { module = "de.t14d3:spool", version.ref = "spool" }
 
 rapunzellib-api = { module = "de.t14d3.rapunzellib:api", version.ref = "rapunzellib" }
+rapunzellib-common = { module = "de.t14d3.rapunzellib:common", version.ref = "rapunzellib" }
 rapunzellib-network = { module = "de.t14d3.rapunzellib:network", version.ref = "rapunzellib" }
 rapunzellib-database-spool = { module = "de.t14d3.rapunzellib:database-spool", version.ref = "rapunzellib" }
 rapunzellib-platform-paper = { module = "de.t14d3.rapunzellib:platform-paper", version.ref = "rapunzellib" }

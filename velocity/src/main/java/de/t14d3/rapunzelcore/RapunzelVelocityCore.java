@@ -29,6 +29,8 @@ import de.t14d3.rapunzelcore.database.entities.Warp;
 import de.t14d3.rapunzelcore.database.entities.TeleportRequest;
 import de.t14d3.rapunzelcore.modules.chat.ChannelManager;
 import de.t14d3.rapunzelcore.modules.chat.ChatModule;
+import de.t14d3.rapunzelcore.modules.JoinLeaveModule;
+import de.t14d3.rapunzelcore.modules.joinleave.VelocityJoinLeaveModuleImpl;
 import de.t14d3.rapunzellib.network.queue.DbQueuedMessenger;
 import de.t14d3.rapunzellib.network.queue.NetworkOutboxMessage;
 import de.t14d3.rapunzellib.network.queue.NetworkQueueConfig;
@@ -180,7 +182,7 @@ public class RapunzelVelocityCore implements RapunzelCore {
         return server.getCommandManager();
     }
 
-    public static class VelocityPlatformManager implements PlatformManager {
+    public static class VelocityPlatformManager implements PlatformManager {    
         private static final class NoopChatModuleImpl implements ChatModule.ChatModuleImpl {
             @Override
             public void initialize() {
@@ -197,6 +199,11 @@ public class RapunzelVelocityCore implements RapunzelCore {
         public ChatModule.ChatModuleImpl createChatModuleImpl(RapunzelCore core, ChannelManager channelManager) {
             // Chat runs on Paper backends. On Velocity we only provide the message router (VelocityPluginMessenger).
             return new NoopChatModuleImpl();
+        }
+
+        @Override
+        public JoinLeaveModule.JoinLeaveModuleImpl createJoinLeaveModuleImpl(RapunzelCore core, boolean networkEnabled, java.nio.file.Path configPath) {
+            return new VelocityJoinLeaveModuleImpl((RapunzelVelocityCore) core, networkEnabled, configPath);
         }
 
     }

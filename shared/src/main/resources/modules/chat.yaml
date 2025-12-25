@@ -16,7 +16,7 @@ channels:
   global:
     type: global
     format: '<gray><player><dark_gray>: <white><message>'
-    crossServer: false
+    crossServer: true
   local:
     type: local
     format: '<yellow>[Local] <light_gray><player><gray>: <white><message>'

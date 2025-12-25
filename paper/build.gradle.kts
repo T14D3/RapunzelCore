@@ -8,6 +8,7 @@ dependencies {
     implementation(project(":shared"))
     implementation(libs.rapunzellib.platform.paper)
     implementation(libs.rapunzellib.network)
+    implementation(libs.rapunzellib.common)
     implementation(libs.rapunzellib.database.spool)
 
     paperweight.paperDevBundle(libs.versions.paper.dev.bundle.get())

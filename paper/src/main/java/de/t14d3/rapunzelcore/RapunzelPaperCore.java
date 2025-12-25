@@ -22,9 +22,12 @@ import de.t14d3.rapunzellib.network.queue.NetworkQueueConfig;
 import de.t14d3.rapunzelcore.modules.chat.ChannelManager;
 import de.t14d3.rapunzelcore.modules.chat.ChatModule;
 import de.t14d3.rapunzelcore.modules.chat.PaperChatModuleImpl;
+import de.t14d3.rapunzelcore.modules.JoinLeaveModule;
+import de.t14d3.rapunzelcore.modules.joinleave.PaperJoinLeaveModuleImpl;
 import de.t14d3.rapunzelcore.configsync.CoreConfigSync;
 import de.t14d3.rapunzelcore.util.Closeables;
 import de.t14d3.rapunzelcore.util.ReflectionsUtil;
+import de.t14d3.rapunzellib.platform.paper.network.PaperPluginMessenger;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIPaperConfig;
  import org.bukkit.Bukkit;
@@ -121,11 +124,17 @@ public final class RapunzelPaperCore extends JavaPlugin implements RapunzelCore 
         return new PaperPlatformManager();
     }
 
-    public static class PaperPlatformManager implements PlatformManager {       
+    public static class PaperPlatformManager implements PlatformManager {
         @Override
         public ChatModule.ChatModuleImpl createChatModuleImpl(RapunzelCore core, ChannelManager channelManager) {
             return new PaperChatModuleImpl(core, channelManager);
         }
+
+        @Override
+        public JoinLeaveModule.JoinLeaveModuleImpl createJoinLeaveModuleImpl(RapunzelCore core, boolean networkEnabled, java.nio.file.Path configPath) {
+            return new PaperJoinLeaveModuleImpl((RapunzelPaperCore) core, networkEnabled, configPath);
+        }
+
 
         @Override
         public void registerPermissions(Map<String, String> permissions) {      
@@ -327,11 +336,15 @@ public final class RapunzelPaperCore extends JavaPlugin implements RapunzelCore 
                     queueConfig.maxAge()
                 );
 
-                Rapunzel.context().services().register(Messenger.class, queued);
-                messenger = queued;
+                Rapunzel.context().services().register(DbQueuedMessenger.class, queued);
                 closeable = Closeables.chain(closeable, queued);
             }
         }
+        PaperPluginMessenger pluginMessenger = new PaperPluginMessenger(this);
+        messenger = pluginMessenger;
+        Rapunzel.context().services().register(PaperPluginMessenger.class, pluginMessenger);
+        closeable = Closeables.chain(closeable, pluginMessenger);
+
 
         networking = closeable;
     }
