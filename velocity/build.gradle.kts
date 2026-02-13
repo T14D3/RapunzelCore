@@ -9,6 +9,7 @@ dependencies {
     implementation(libs.rapunzellib.network)
     implementation(libs.rapunzellib.common)
     implementation(libs.rapunzellib.database.spool)
+    implementation(libs.rapunzellib.nbt)
 
     // Velocity API
     implementation(libs.velocity.api)

@@ -2,7 +2,6 @@ package de.t14d3.rapunzelcore.modules.script;
 
 import com.mojang.brigadier.Command;
 import de.t14d3.rapunzelcore.RapunzelCore;
-import de.t14d3.rapunzelcore.RapunzelPaperCore;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.SuggestionInfo;
 import dev.jorel.commandapi.arguments.ArgumentSuggestions;

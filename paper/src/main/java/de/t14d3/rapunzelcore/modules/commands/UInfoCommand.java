@@ -1,6 +1,7 @@
 package de.t14d3.rapunzelcore.modules.commands;
 
 import com.destroystokyo.paper.profile.PlayerProfile;
+import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.RapunzelCore;
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
 import dev.jorel.commandapi.CommandAPICommand;

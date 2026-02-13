@@ -1,5 +1,6 @@
 package de.t14d3.rapunzelcore.modules.commands.invsee;
 
+import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.RapunzelCore;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;

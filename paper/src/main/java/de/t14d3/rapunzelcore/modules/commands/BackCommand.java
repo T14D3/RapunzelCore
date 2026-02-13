@@ -1,6 +1,7 @@
 package de.t14d3.rapunzelcore.modules.commands;
 
 import de.t14d3.rapunzelcore.RapunzelCore;
+import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
 import dev.jorel.commandapi.CommandAPICommand;
 import net.kyori.adventure.text.Component;

@@ -5,8 +5,6 @@ import de.t14d3.rapunzelcore.database.entities.Channel;
 import de.t14d3.rapunzelcore.database.entities.ChannelRepository;
 import de.t14d3.rapunzelcore.database.entities.PlayerEntity;
 import de.t14d3.rapunzelcore.database.entities.PlayerRepository;
-import de.t14d3.rapunzelcore.database.sync.DbEntitySync;
-import de.t14d3.spool.cache.CacheEvent;
 import de.t14d3.rapunzellib.config.YamlConfig;
 
 import java.util.Collections;
@@ -28,39 +26,18 @@ import static de.t14d3.rapunzelcore.database.CoreDatabase.runLocked;
 public class ChannelManager {
     private final ChannelRepository channelRepository;
     private final PlayerRepository playerRepository;
-    private volatile Map<String, Channel> channels = new LinkedHashMap<>();     
+    private volatile Map<String, Channel> channels = new LinkedHashMap<>();
     private volatile Channel defaultChannel;
-    private DbEntitySync.Listener syncListener;
+    private final ChannelRepository.ChangeListener channelChangeListener;
     private final AtomicBoolean reloadQueued = new AtomicBoolean(false);
+
+    private final String playerChannelFormat;
 
     public ChannelManager(YamlConfig config) {
         this.channelRepository = ChannelRepository.getInstance();
         this.playerRepository = PlayerRepository.getInstance();
-        syncChannelsFromConfig(config);
-        reloadChannels();
-        registerSyncListenerIfAvailable();
-    }
-
-    private void registerSyncListenerIfAvailable() {
-        if (syncListener != null) return;
-        DbEntitySync sync = CoreDatabase.entitySync();
-        if (sync == null) return;
-        syncListener = this::onCacheEvent;
-        sync.register(syncListener);
-    }
-
-    public void close() {
-        DbEntitySync.Listener listener = syncListener;
-        syncListener = null;
-        DbEntitySync sync = CoreDatabase.entitySync();
-        if (sync != null && listener != null) {
-            sync.unregister(listener);
-        }
-    }
-
-    private void onCacheEvent(CacheEvent event, String sourceServer) {    
-        if (event == null || event.key() == null) return;
-        if (!Channel.class.getName().equals(event.key().entityClassName())) return;
+        this.playerChannelFormat = config.getString("channels.player-channel-format", "<prefix>[<name>]<reset> <message>");
+        this.channelChangeListener = () -> {
         if (!reloadQueued.compareAndSet(false, true)) return;
         CoreDatabase.runAsync(() -> {
             try {
@@ -69,7 +46,16 @@ public class ChannelManager {
                 reloadQueued.set(false);
             }
         });
+    };
+        syncChannelsFromConfig(config);
+        reloadChannels();
+        channelRepository.registerChangeListener(channelChangeListener);
     }
+
+    public void close() {
+        channelRepository.unregisterChangeListener(channelChangeListener);
+    }
+
 
     /**
      * Loads channels from configuration file into the database.
@@ -290,6 +276,7 @@ public class ChannelManager {
             ));
         });
         channels = fresh;
+        channelRepository.replaceCache(fresh);
 
         defaultChannel = fresh.values().stream()
             .filter(Channel::isDefault)
@@ -298,5 +285,18 @@ public class ChannelManager {
                 .filter(ch -> ch.getType() == Channel.ChannelType.GLOBAL)
                 .findFirst()
                 .orElse(fresh.values().stream().findFirst().orElse(null)));
+    }
+
+    public Channel createChannel(String name) {
+        if (name == null || name.isBlank()) return null;
+        if (getChannel(name) != null) return null;
+        return new Channel(
+                name,
+                Channel.ChannelType.PLAYER,
+                playerChannelFormat,
+                "",
+                "",
+                true
+        );
     }
 }

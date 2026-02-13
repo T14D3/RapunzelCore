@@ -1,0 +1,53 @@
+
+# Pet Management Module Configuration
+# 
+# This module manages player pets including:
+# - Pet protection from damage/interaction by non-owners
+# - Cross-server pet tracking
+# - Access control for other players
+
+# Server name for cross-server tracking
+# If not set, will use Bukkit's server name
+server-name: ""
+
+# Default protection settings for new pets
+defaults:
+  # Whether new pets are protected by default
+  protected: true
+
+# Protection settings
+protection:
+  # Block damage from players without access
+  block-damage: true
+  
+  # Block interactions from players without access
+  block-interaction: true
+  
+  # Allow environmental damage (falling, drowning, etc.)
+  allow-environmental-damage: true
+  
+  # Allow mob damage
+  allow-mob-damage: true
+
+# Tracking settings
+tracking:
+  # How often to sync pet locations to database (in seconds)
+  sync-interval: 60
+  
+  # Track pet locations across servers
+  cross-server: true
+  
+  # Maximum distance to look for pets when using commands
+  max-lookup-distance: 10
+
+# Limits
+limits:
+  # Maximum pets per player (0 = unlimited)
+  max-pets-per-player: 0
+  
+  # Maximum players that can have access to a single pet
+  max-access-per-pet: 10
+
+# Messages (can be customized, use MiniMessage format)
+messages:
+  prefix: "<dark_gray>[<gold>Pets<dark_gray>] <reset>"

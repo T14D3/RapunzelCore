@@ -42,7 +42,7 @@ final class TeleportRequestsRepository extends EntityRepository<TeleportRequest>
     }
 
     static List<TeleportRequest> findForTarget(String targetUuid) {
-        if (targetUuid == null || targetUuid.isBlank()) return List.of();       
+        if (targetUuid == null || targetUuid.isBlank()) return List.of();
         return CoreDatabase.locked(() -> instance.findBy("targetUuid", targetUuid).stream()
             .sorted(Comparator.comparingLong(TeleportRequest::getCreatedAt).reversed())
             .toList()

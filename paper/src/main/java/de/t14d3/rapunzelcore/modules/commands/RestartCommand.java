@@ -1,5 +1,6 @@
 package de.t14d3.rapunzelcore.modules.commands;
 
+import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.RapunzelCore;
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
 import dev.jorel.commandapi.CommandAPICommand;
@@ -7,7 +8,6 @@ import dev.jorel.commandapi.arguments.StringArgument;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitTask;
-
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -17,8 +17,7 @@ public class RestartCommand implements Command {
 
     @Override
     public void register() {
-        RapunzelPaperCore plugin = (RapunzelPaperCore) RapunzelCore.getInstance();
-
+        RapunzelPaperCore core = (RapunzelPaperCore) RapunzelCore.getInstance();
 
         new CommandAPICommand("restart")
                 .withFullDescription("Schedules or cancels a server restart.")
@@ -35,78 +34,67 @@ public class RestartCommand implements Command {
                 .executes((executor, args) -> {
                     String raw = (String) args.get("secondsOrCancel");
                     if (raw == null) {
-                        executor.sendMessage(plugin.getMessageHandler().getMessage("commands.restart.error.invalid", "null"));
+                        executor.sendMessage(core.getMessageHandler().getMessage("commands.restart.error.invalid", "null"));
                         return Command.SINGLE_SUCCESS;
                     }
-
 
                     if (raw.equalsIgnoreCase("cancel")) {
                         if (restartTask != null) {
                             restartTask.cancel();
                             restartTask = null;
                             remainingSeconds.set(0);
-                            Component message = plugin.getMessageHandler().getMessage("commands.restart.cancelled");
+                            Component message = core.getMessageHandler().getMessage("commands.restart.cancelled");
                             Bukkit.broadcast(message);
                         } else {
-                            executor.sendMessage(plugin.getMessageHandler().getMessage("commands.restart.error.none"));
+                            executor.sendMessage(core.getMessageHandler().getMessage("commands.restart.error.none"));
                         }
                         return Command.SINGLE_SUCCESS;
                     }
-
 
                     int seconds;
                     try {
                         seconds = Integer.parseInt(raw);
                         if (seconds <= 0) throw new NumberFormatException();
                     } catch (NumberFormatException ex) {
-                        executor.sendMessage(plugin.getMessageHandler().getMessage("commands.restart.error.invalid", raw));
+                        executor.sendMessage(core.getMessageHandler().getMessage("commands.restart.error.invalid", raw));
                         return Command.SINGLE_SUCCESS;
                     }
-
 
                     if (restartTask != null) {
                         restartTask.cancel();
                         restartTask = null;
                     }
 
-
                     remainingSeconds.set(seconds);
 
+                    Bukkit.broadcast(core.getMessageHandler().getMessage("commands.restart.started", String.valueOf(seconds)));
 
-                    Bukkit.broadcast(plugin.getMessageHandler().getMessage("commands.restart.started", String.valueOf(seconds)));
-
-
-                    restartTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+                    restartTask = Bukkit.getScheduler().runTaskTimer(core, () -> {
                         int left = remainingSeconds.decrementAndGet();
-
 
                         if (left > 0) {
                             // Broadcast selected ticks: every minute, every 10s under a minute, and each second under 5s
                             if (left % 60 == 0 || left <= 10 || (left <= 60 && left % 10 == 0)) {
-                                Bukkit.broadcast(plugin.getMessageHandler().getMessage("commands.restart.tick", String.valueOf(left)));
+                                Bukkit.broadcast(core.getMessageHandler().getMessage("commands.restart.tick", String.valueOf(left)));
                             }
                         } else {
-                            Bukkit.broadcast(plugin.getMessageHandler().getMessage("commands.restart.complete"));
+                            Bukkit.broadcast(core.getMessageHandler().getMessage("commands.restart.complete"));
                             restartTask.cancel();
                             restartTask = null;
                             remainingSeconds.set(0);
                             Bukkit.shutdown();
                         }
 
-
                     }, 20L, 20L);
-
 
                     return Command.SINGLE_SUCCESS;
                 })
-                .register(plugin);
+                .register(core);
     }
-
 
     public static boolean isRestartScheduled() {
         return restartTask != null;
     }
-
 
     public static int getRemainingSeconds() {
         return remainingSeconds.get();

@@ -1,7 +1,7 @@
 [versions]
-shadow = "9.0.0-beta8"
+shadow = "9.3.1"
 run-paper = "2.0.1"
-rapunzellib = "0.1.2-SNAPSHOT"
+rapunzellib = "0.2.1-SNAPSHOT"
 paperweight = "2.0.0-beta.19"
 
 spool = "1.2-SNAPSHOT"
@@ -10,6 +10,8 @@ reflections = "0.10.2"
 mysql-driver = "9.3.0"
 slf4j = "2.0.7"
 adventure = "4.25.0"
+
+vault = "1.7"
 
 minecraft = "1.21.10"
 paper-dev-bundle = "1.21.10-R0.1-SNAPSHOT"
@@ -25,6 +27,9 @@ rapunzellib-network = { module = "de.t14d3.rapunzellib:network", version.ref = "
 rapunzellib-database-spool = { module = "de.t14d3.rapunzellib:database-spool", version.ref = "rapunzellib" }
 rapunzellib-platform-paper = { module = "de.t14d3.rapunzellib:platform-paper", version.ref = "rapunzellib" }
 rapunzellib-platform-velocity = { module = "de.t14d3.rapunzellib:platform-velocity", version.ref = "rapunzellib" }
+rapunzellib-nbt = { module = "de.t14d3.rapunzellib:nbt", version.ref = "rapunzellib" }
+rapunzellib-nbt-paper = { module = "de.t14d3.rapunzellib:nbt-paper", version.ref = "rapunzellib" }
+rapunzellib-events = { module = "de.t14d3.rapunzellib:events", version.ref = "rapunzellib" }
 
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 reflections = { module = "org.reflections:reflections", version.ref = "reflections" }
@@ -33,6 +38,7 @@ mysql-driver = { module = "com.mysql:mysql-connector-j", version.ref = "mysql-dr
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 
+vault = { module = "com.github.MilkBowl:VaultAPI", version.ref = "vault" }
 
 adventure-api = { module = "net.kyori:adventure-api", version.ref = "adventure" }
 adventure-text-minimessage = { module = "net.kyori:adventure-text-minimessage", version.ref = "adventure" }

@@ -1,5 +1,6 @@
 package de.t14d3.rapunzelcore.modules.teleports;
 
+import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.database.CoreDatabase;
 import de.t14d3.rapunzelcore.database.sync.DbEntitySync;
 import de.t14d3.rapunzelcore.database.entities.Warp;
@@ -24,9 +25,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static de.t14d3.rapunzelcore.database.CoreDatabase.flushAsync;
 
 public class WarpsRepository extends EntityRepository<Warp> {
-    private static final WarpsRepository instance = new WarpsRepository();      
+    private static final WarpsRepository instance = new WarpsRepository();
 
-    private volatile Map<String, Warp> warpsByName = new LinkedHashMap<>();     
+    private volatile Map<String, Warp> warpsByName = new LinkedHashMap<>();
     private DbEntitySync.Listener syncListener;
     private final AtomicBoolean reloadQueued = new AtomicBoolean(false);
 
@@ -85,7 +86,7 @@ public class WarpsRepository extends EntityRepository<Warp> {
         String serverName = resolveServerName();
 
         CoreDatabase.runLocked(() -> {
-            Warp warp = instance.warpsByName.get(warpName.toLowerCase());       
+            Warp warp = instance.warpsByName.get(warpName.toLowerCase());
             if (warp == null) {
                 warp = instance.findOneBy("name", warpName);
             }
@@ -261,7 +262,7 @@ public class WarpsRepository extends EntityRepository<Warp> {
     private static void removeWarpFromCache(String name) {
         if (name == null) return;
         String key = name.toLowerCase();
-        Map<String, Warp> updated = new LinkedHashMap<>(instance.warpsByName);  
+        Map<String, Warp> updated = new LinkedHashMap<>(instance.warpsByName);
         updated.remove(key);
         instance.warpsByName = updated;
     }

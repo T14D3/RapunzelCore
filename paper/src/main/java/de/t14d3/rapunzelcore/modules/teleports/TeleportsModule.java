@@ -8,7 +8,6 @@ import de.t14d3.rapunzelcore.database.CoreDatabase;
 import de.t14d3.rapunzelcore.database.entities.PlayerRepository;
 import de.t14d3.rapunzelcore.modules.commands.Command;
 import de.t14d3.rapunzelcore.modules.teleports.network.NotifyPlayerMessage;
-import de.t14d3.rapunzellib.config.YamlConfig;
 import de.t14d3.rapunzellib.network.NetworkEventBus;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -26,8 +25,7 @@ import java.util.UUID;
 public class TeleportsModule implements Module, Listener, AutoCloseable {
     private boolean enabled = false;
     private RapunzelCore core;
-    private YamlConfig config;
-    private RapunzelPaperCore plugin;
+    private RapunzelPaperCore paperCore;
     private NetworkEventBus bus;
     private NetworkEventBus.Subscription notifySub;
 
@@ -38,21 +36,18 @@ public class TeleportsModule implements Module, Listener, AutoCloseable {
     private record PendingTeleportWork(String action, String arg) {
     }
 
-    @Override
     public Environment getEnvironment() {
         return Environment.BOTH;
     }
 
-    @Override
     public void enable(RapunzelCore core, Environment environment) {
         if (enabled) return;
         this.core = core;
-        this.config = loadConfig();
         enabled = true;
 
         if (environment == Environment.PAPER) {
-            this.plugin = (RapunzelPaperCore) core;
-            this.bus = new NetworkEventBus(plugin.getMessenger());
+            this.paperCore = (RapunzelPaperCore) core;
+            this.bus = new NetworkEventBus(paperCore.getMessenger());
 
             this.notifySub = bus.register(
                 de.t14d3.rapunzelcore.network.NetworkChannels.TELEPORTS_BACKEND,
@@ -60,15 +55,14 @@ public class TeleportsModule implements Module, Listener, AutoCloseable {
                 (payload, source) -> handleNotify(payload)
             );
 
-            Bukkit.getPluginManager().registerEvents(this, plugin);
+            Bukkit.getPluginManager().registerEvents(this, paperCore);
 
-            this.warpCommands = new WarpCommands(plugin);
-            this.tpaCommands = new TpaCommands(plugin);
-            this.homeCommands = new HomeCommands(plugin);
+            this.warpCommands = new WarpCommands(paperCore);
+            this.tpaCommands = new TpaCommands(paperCore);
+            this.homeCommands = new HomeCommands(paperCore);
         }
     }
 
-    @Override
     public void disable(RapunzelCore core, Environment environment) {
         if (!enabled) return;
         // Commands are automatically unregistered
@@ -80,17 +74,14 @@ public class TeleportsModule implements Module, Listener, AutoCloseable {
         }
     }
 
-    @Override
-    public String getName() {
-        return "teleports";
-    }
-
-    @Override
     public boolean isEnabled() {
         return enabled;
     }
 
-    @Override
+    public String getName() {
+        return "teleports";
+    }
+
     public Map<String, String> getPermissions() {
         return Map.ofEntries(
                 Map.entry("rapunzelcore.home", "op"),
@@ -115,6 +106,7 @@ public class TeleportsModule implements Module, Listener, AutoCloseable {
                 Map.entry("rapunzelcore.tpohere", "op")
         );
     }
+
     public TeleportsModule() {
 
     }
@@ -130,14 +122,14 @@ public class TeleportsModule implements Module, Listener, AutoCloseable {
 
         Player player = Bukkit.getPlayer(id);
         if (player == null) return;
-        player.sendMessage(plugin.getMessageHandler().getMessage(payload.messageKey(), payload.args()));
+        player.sendMessage(paperCore.getMessageHandler().getMessage(payload.messageKey(), payload.args()));
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
         UUID id = event.getPlayer().getUniqueId();
 
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        Bukkit.getScheduler().runTaskAsynchronously(paperCore, () -> {
             PlayerRepository.refreshFromDb(id);
             HomesRepository.refreshFromDb(id.toString());
 
@@ -148,7 +140,7 @@ public class TeleportsModule implements Module, Listener, AutoCloseable {
             if (local == null || local.isBlank()) return;
 
             final String localServer = local;
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            Bukkit.getScheduler().runTaskLater(paperCore, () -> {
                 Player player = Bukkit.getPlayer(id);
                 if (player == null || !player.isOnline()) return;
                 applyPending(player, localServer);
@@ -178,12 +170,12 @@ public class TeleportsModule implements Module, Listener, AutoCloseable {
                 return new PendingTeleportWork(pending.getAction(), pending.getArg());
             }
             return null;
-        })).whenComplete((work, error) -> Bukkit.getScheduler().runTask(plugin, () -> {
+        })).whenComplete((work, error) -> Bukkit.getScheduler().runTask(paperCore, () -> {
             Player online = Bukkit.getPlayer(playerId);
             if (online == null || !online.isOnline()) return;
 
             if (error != null) {
-                plugin.getLogger().warning("Failed to load pending teleports for " + playerId + ": " + error.getMessage());
+                paperCore.getLogger().warning("Failed to load pending teleports for " + playerId + ": " + error.getMessage());
                 return;
             }
             if (work == null) return;
@@ -191,7 +183,7 @@ public class TeleportsModule implements Module, Listener, AutoCloseable {
             try {
                 executePending(online, work);
             } catch (Exception e) {
-                plugin.getLogger().warning("Failed to execute pending teleport: " + e.getMessage());
+                paperCore.getLogger().warning("Failed to execute pending teleport: " + e.getMessage());
             }
         }));
     }
@@ -206,12 +198,12 @@ public class TeleportsModule implements Module, Listener, AutoCloseable {
             String homeName = arg;
 
             HomesRepository.getHomeAsync(playerId, homeName).whenComplete((home, error) ->
-                Bukkit.getScheduler().runTask(plugin, () -> {
+                Bukkit.getScheduler().runTask(paperCore, () -> {
                     Player online = Bukkit.getPlayer(playerId);
                     if (online == null || !online.isOnline()) return;
 
                     if (error != null) {
-                        plugin.getLogger().warning("Failed to load pending home '" + homeName + "' for " + playerId + ": " + error.getMessage());
+                        paperCore.getLogger().warning("Failed to load pending home '" + homeName + "' for " + playerId + ": " + error.getMessage());
                         return;
                     }
                     teleportNow(online, home);
@@ -237,12 +229,12 @@ public class TeleportsModule implements Module, Listener, AutoCloseable {
 
             Player target = Bukkit.getPlayer(targetId);
             if (target == null || !target.isOnline()) {
-                player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.offline"));
+                player.sendMessage(paperCore.getMessageHandler().getMessage("general.error.player.offline"));
                 return;
             }
 
             player.teleport(target.getLocation());
-            player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tphere.success", target.getName()));
+            player.sendMessage(paperCore.getMessageHandler().getMessage("teleports.tphere.success", target.getName()));
         }
     }
 
@@ -273,12 +265,23 @@ public class TeleportsModule implements Module, Listener, AutoCloseable {
         player.teleport(location);
     }
 
-    @Override
     public void close() {
         if (notifySub != null) notifySub.close();
         notifySub = null;
         bus = null;
-        plugin = null;
+        paperCore = null;
         HandlerList.unregisterAll(this);
+    }
+
+    @Override
+    public void disable() {
+        if (!enabled) return;
+        enabled = false;
+        close();
+    }
+
+    @Override
+    public void enable(RapunzelCore core) {
+        enable(core, Environment.PAPER);
     }
 }

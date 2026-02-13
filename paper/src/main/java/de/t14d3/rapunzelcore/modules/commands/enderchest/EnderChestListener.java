@@ -1,7 +1,6 @@
 package de.t14d3.rapunzelcore.modules.commands.enderchest;
 
 import de.t14d3.rapunzelcore.RapunzelCore;
-import de.t14d3.rapunzelcore.RapunzelPaperCore;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;

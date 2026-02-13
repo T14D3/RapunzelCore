@@ -1,22 +1,21 @@
 package de.t14d3.rapunzelcore.modules.chat;
 
-import de.t14d3.rapunzelcore.Environment;
 import de.t14d3.rapunzelcore.RapunzelCore;
-import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzellib.config.YamlConfig;
-
-import java.util.Map;
+import de.t14d3.rapunzellib.Rapunzel;
+import java.nio.file.Path;
+import de.t14d3.rapunzelcore.Module;
+import de.t14d3.rapunzelcore.Environment;
 
 /**
  * Generic ChatModule that delegates to platform-specific implementations.
  * This module automatically selects the appropriate implementation based on the environment.
  */
 public class ChatModule implements Module {
-    private boolean enabled = false;
-    private YamlConfig config;
     private ChannelManager channelManager;
     private static String[] iconConfig;
     private static String defaultFormat;
+    private boolean enabled = false;
 
     // Paper-only: chat is handled on backend servers, not on the proxy.
     private ChatModuleImpl chatImpl;
@@ -26,38 +25,30 @@ public class ChatModule implements Module {
     }
 
     @Override
-    public Environment getEnvironment() {
-        return Environment.BOTH;
-    }
-
-    @Override
-    public void enable(RapunzelCore core, Environment environment) {
-        if (enabled) return;
-        enabled = true;
-
-        config = loadConfig();
+    public void enable(RapunzelCore core) {
+        this.enabled = true;
+        YamlConfig config = loadConfig();
         iconConfig = config.getString("general.icons.item", "gui:icon/search").split(":");
-        defaultFormat = config.getString("general.fallback-format", "<name>: <message>");
+        defaultFormat = config.getString("general.fallback-format", "default");
 
         channelManager = new ChannelManager(config);
 
         // Create platform-specific implementation
         chatImpl = core.getPlatformManager().createChatModuleImpl(core, channelManager);
-        chatImpl.initialize();
+        if (chatImpl != null) {
+            chatImpl.initialize();
+        }
     }
 
     @Override
-    public void disable(RapunzelCore core, Environment environment) {
-        if (!enabled) return;
-
+    public void disable() {
+        this.enabled = false;
         if (chatImpl != null) {
             chatImpl.cleanup();
         }
         if (channelManager != null) {
             channelManager.close();
         }
-
-        enabled = false;
         chatImpl = null;
         channelManager = null;
     }
@@ -68,20 +59,13 @@ public class ChatModule implements Module {
     }
 
     @Override
-    public boolean isEnabled() {
-        return enabled;
+    public Environment getEnvironment() {
+        return Environment.BOTH;
     }
 
     @Override
-    public Map<String, String> getPermissions() {
-        return Map.ofEntries(
-                Map.entry("rapunzelcore.msg", "true"),
-                Map.entry("rapunzelcore.broadcast", "op"),
-                Map.entry("rapunzelcore.socialspy", "op"),
-                Map.entry("rapunzelcore.socialspy.bypass", "op"),
-                Map.entry("rapunzelcore.channel", "true"),
-                Map.entry("rapunzelcore.chat.color", "false")
-        );
+    public boolean isEnabled() {
+        return enabled;
     }
 
     /**
@@ -100,9 +84,6 @@ public class ChatModule implements Module {
         return iconConfig;
     }
 
-    /*
-     * Interface for platform-specific chat module implementations.
-     */
     public interface ChatModuleImpl {
         /** Initialize the platform-specific implementation. */
         void initialize();

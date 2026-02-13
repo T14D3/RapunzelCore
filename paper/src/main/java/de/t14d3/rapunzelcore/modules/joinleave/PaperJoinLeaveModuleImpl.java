@@ -1,6 +1,7 @@
 package de.t14d3.rapunzelcore.modules.joinleave;
 
 import de.t14d3.rapunzelcore.modules.JoinLeaveModule;
+import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.modules.JoinLeaveModule.JoinLeaveModuleImpl;
 import de.t14d3.rapunzelcore.network.NetworkChannels;
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
@@ -21,7 +22,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import java.nio.file.Path;
 
 public class PaperJoinLeaveModuleImpl implements JoinLeaveModuleImpl, Listener {
-    private final RapunzelPaperCore plugin;
+    private final RapunzelPaperCore core;
     private final boolean networkEnabled;
     private final Path configPath;
     private static final long JOIN_BROADCAST_DELAY_TICKS = 40L;
@@ -31,8 +32,8 @@ public class PaperJoinLeaveModuleImpl implements JoinLeaveModuleImpl, Listener {
     private Subscription proxySignalSub;
     private boolean proxyHandlesBroadcasts;
 
-    public PaperJoinLeaveModuleImpl(RapunzelPaperCore plugin, boolean networkEnabled, Path configPath) {
-        this.plugin = plugin;
+    public PaperJoinLeaveModuleImpl(RapunzelPaperCore core, boolean networkEnabled, Path configPath) {
+        this.core = core;
         this.networkEnabled = networkEnabled;
         this.configPath = configPath;
     }
@@ -40,10 +41,10 @@ public class PaperJoinLeaveModuleImpl implements JoinLeaveModuleImpl, Listener {
     @Override
     public void initialize() {
         ConfigService configService = Rapunzel.context().services().get(ConfigService.class);
-        this.messages = new YamlMessageFormatService(configService, plugin.getSLF4JLogger(), configPath, "modules/joinleave.yaml");
+        this.messages = new YamlMessageFormatService(configService, core.getSLF4JLogger(), configPath, "modules/joinleave.yaml");
 
         if (networkEnabled) {
-            this.bus = new NetworkEventBus(plugin.getMessenger());
+            this.bus = new NetworkEventBus(core.getMessenger());
             this.proxySignalSub = bus.register(
                 NetworkChannels.JOIN_LEAVE_BROADCAST,
                 JoinLeaveModule.JoinLeavePayload.class,
@@ -55,7 +56,7 @@ public class PaperJoinLeaveModuleImpl implements JoinLeaveModuleImpl, Listener {
             );
         }
 
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
+        core.getServer().getPluginManager().registerEvents(this, core);
     }
 
     @Override
@@ -80,8 +81,8 @@ public class PaperJoinLeaveModuleImpl implements JoinLeaveModuleImpl, Listener {
         if (shouldSkipLocal()) return;
         String playerName = event.getPlayer().getName();
         // Delay to give the proxy time to announce it will handle broadcasts after restarts.
-        plugin.getServer().getScheduler().runTaskLater(
-            plugin,
+        core.getServer().getScheduler().runTaskLater(
+            core,
             () -> {
                 if (shouldSkipLocal()) return;
                 broadcastJoin(playerName);
@@ -99,12 +100,12 @@ public class PaperJoinLeaveModuleImpl implements JoinLeaveModuleImpl, Listener {
 
     private void broadcastJoin(String playerName) {
         Component message = messages.component("join-message", placeholders(playerName));
-        plugin.getServer().broadcast(message);
+        core.getServer().broadcast(message);
     }
 
     private void broadcastLeave(PlayerQuitEvent event) {
         Component message = messages.component("leave-message", placeholders(event.getPlayer().getName()));
-        plugin.getServer().broadcast(message);
+        core.getServer().broadcast(message);
     }
 
     private boolean shouldSkipLocal() {

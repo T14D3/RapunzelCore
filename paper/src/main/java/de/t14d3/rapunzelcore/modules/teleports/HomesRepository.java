@@ -1,5 +1,6 @@
 package de.t14d3.rapunzelcore.modules.teleports;
 
+import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
 import de.t14d3.rapunzelcore.database.CoreDatabase;
 import de.t14d3.rapunzelcore.database.sync.DbEntitySync;
@@ -26,11 +27,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class HomesRepository extends EntityRepository<Home> {
-    private static final HomesRepository instance = new HomesRepository();      
+    private static final HomesRepository instance = new HomesRepository();
 
     private volatile Map<String, List<Home>> homesByPlayer = new LinkedHashMap<>();
     private DbEntitySync.Listener syncListener;
-    private final AtomicBoolean reloadQueued = new AtomicBoolean(false);        
+    private final AtomicBoolean reloadQueued = new AtomicBoolean(false);
 
     public enum SetHomeStatus {
         CREATED,
@@ -237,7 +238,7 @@ public class HomesRepository extends EntityRepository<Home> {
         PlayerRepository.refreshFromDb(uuid);
     }
 
-    public static Map<String, Location> getHomeLocations(Player bplayer) {      
+    public static Map<String, Location> getHomeLocations(Player bplayer) {
         List<Home> homes = getHomes(bplayer);
         if (homes == null) return Map.of();
         Map<String, Location> locations = new HashMap<>();
@@ -412,7 +413,7 @@ public class HomesRepository extends EntityRepository<Home> {
     }
 
     private static Optional<PlayerEntity> getDbPlayer(Player bplayer) {
-        return getServerPlayer(bplayer).map(PlayerRepository::getPlayer);       
+        return getServerPlayer(bplayer).map(PlayerRepository::getPlayer);
     }
 
     private static HomeSnapshot snapshot(Home home) {

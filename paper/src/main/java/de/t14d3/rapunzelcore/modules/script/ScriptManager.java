@@ -295,14 +295,12 @@ public class ScriptManager {
         }
     }
 
-
-
     public void saveAliases() {
         YamlConfig config = ((ScriptModule) module).getConfig();
         for (String key : new HashSet<>(config.keys(false))) {
             config.set(key, null);
         }
-        for (Map.Entry<String, AliasData> entry : aliases.entrySet()) {    
+        for (Map.Entry<String, AliasData> entry : aliases.entrySet()) {
             Map<String, Object> map = new HashMap<>();
             map.put("script", entry.getValue().script);
             map.put("permission", entry.getValue().permission);
@@ -493,5 +491,4 @@ public class ScriptManager {
             return Result.SUCCESS;
         }
     }
-
-    }
+}

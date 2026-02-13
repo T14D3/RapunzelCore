@@ -1,6 +1,7 @@
 package de.t14d3.rapunzelcore.modules.chat;
 
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
+import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.database.entities.Channel;
 import de.t14d3.rapunzelcore.network.NetworkChannels;
 import de.t14d3.rapunzellib.network.NetworkEventBus;
@@ -31,16 +32,16 @@ public class PaperChannelBroadcaster {
             .tags(TagResolver.resolver(StandardTags.color(), StandardTags.decorations()))
             .build();
 
-    private final RapunzelPaperCore plugin;
+    private final RapunzelPaperCore core;
     private final ChannelManager channelManager;
     private final NetworkEventBus eventBus;
     private Subscription incomingSubscription;
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
 
-    public PaperChannelBroadcaster(RapunzelPaperCore plugin, ChannelManager channelManager) {
-        this.plugin = plugin;
+    public PaperChannelBroadcaster(RapunzelPaperCore core, ChannelManager channelManager) {
+        this.core = core;
         this.channelManager = channelManager;
-        this.eventBus = new NetworkEventBus(plugin.getMessenger());
+        this.eventBus = new NetworkEventBus(core.getMessenger());
     }
 
     public void broadcastOutgoing(org.bukkit.entity.Player sender, Channel channel, Component message) {
@@ -92,7 +93,7 @@ public class PaperChannelBroadcaster {
                 if (channel == null || !channel.isCrossServer()) return;
                 if (Bukkit.getOnlinePlayers().isEmpty()) return;
 
-                Bukkit.getScheduler().runTask(plugin, () -> {
+                Bukkit.getScheduler().runTask(core, () -> {
                     Component formatted = deserializePayload(payload.getFormattedComponentJson());
                     broadcastIncoming(channel, formatted);
                 });

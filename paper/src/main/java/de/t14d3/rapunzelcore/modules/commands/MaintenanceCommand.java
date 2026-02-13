@@ -1,6 +1,6 @@
 package de.t14d3.rapunzelcore.modules.commands;
 
-
+import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.RapunzelCore;
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
 import dev.jorel.commandapi.CommandAPI;
@@ -13,7 +13,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-
 
 public class MaintenanceCommand implements Listener, Command {
     private static boolean maintenanceMode;

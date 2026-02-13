@@ -5,12 +5,16 @@ import de.t14d3.rapunzellib.network.Messenger;
 import de.t14d3.rapunzellib.config.YamlConfig;
 import de.t14d3.rapunzelcore.modules.chat.ChannelManager;
 import de.t14d3.rapunzelcore.modules.chat.ChatModule;
+import de.t14d3.rapunzelcore.modules.moderation.ModerationModule;
 import de.t14d3.rapunzelcore.modules.JoinLeaveModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.*;
+import de.t14d3.rapunzelcore.modules.entitytransfer.EntityTransferModule;
+import de.t14d3.rapunzelcore.modules.portals.PortalModule;
+import de.t14d3.rapunzelcore.modules.pets.PetsModule;
 
 
 /**
@@ -79,7 +83,7 @@ public interface RapunzelCore {
      * 
      * @return List of all modules
      */
-    List<Module> getModules();
+    List<ModuleDescriptor> getModules();
     
     /**
      * Reload the plugin configuration and modules.
@@ -104,9 +108,26 @@ public interface RapunzelCore {
 
     PlatformManager getPlatformManager();
 
-    interface PlatformManager {
+    /**
+     * Get the resource provider for accessing plugin resources.
+     *
+     * @return The resource provider
+     */
+    Object getResourceProvider();
+interface PlatformManager {
         ChatModule.ChatModuleImpl createChatModuleImpl(RapunzelCore core, ChannelManager channelManager);
-        JoinLeaveModule.JoinLeaveModuleImpl createJoinLeaveModuleImpl(RapunzelCore core, boolean networkEnabled, java.nio.file.Path configPath);
+        JoinLeaveModule.JoinLeaveModuleImpl createJoinLeaveModuleImpl(RapunzelCore core, YamlConfig config, java.nio.file.Path configPath);
+
+        /**
+         * Creates a platform-specific implementation of the moderation module.
+         *
+         * @param core The RapunzelCore instance
+         * @param config The moderation module configuration
+         * @return The platform-specific implementation, or null if not supported
+         */
+        default ModerationModule.ModerationModuleImpl createModerationModuleImpl(RapunzelCore core, YamlConfig config) {
+            return null;
+        }
 
         /**
          * Registers the given permissions with the underlying platform, if supported.
@@ -115,6 +136,36 @@ public interface RapunzelCore {
          */
         default void registerPermissions(Map<String, String> permissions) {
             // no-op by default
+        }
+
+        /**
+         * Creates a platform-specific implementation of the entity transfer module.
+         *
+         * @param core The RapunzelCore instance
+         * @return The platform-specific implementation, or null if not supported
+         */
+        default EntityTransferModule.EntityTransferModuleImpl createEntityTransferModuleImpl(RapunzelCore core) {
+            return null;
+        }
+
+        /**
+         * Creates a platform-specific implementation of the portal module.
+         *
+         * @param core The RapunzelCore instance
+         * @return The platform-specific implementation, or null if not supported
+         */
+        default PortalModule.PortalModuleImpl createPortalModuleImpl(RapunzelCore core) {
+            return null;
+        }
+
+        /**
+         * Creates a platform-specific implementation of the pets module.
+         *
+         * @param core The RapunzelCore instance
+         * @return The platform-specific implementation, or null if not supported
+         */
+        default PetsModule.PetsModuleImpl createPetsModuleImpl(RapunzelCore core) {
+            return null;
         }
     }
 }

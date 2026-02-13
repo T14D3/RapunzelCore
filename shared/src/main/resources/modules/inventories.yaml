@@ -1,0 +1,46 @@
+# Inventory segregation across gamemodes and world-groups.
+sync:
+  save-on-join: true
+  save-on-quit: true
+  save-on-world-change: true
+  save-on-gamemode-change: true
+  flush-immediately: true
+  network-invalidation: true
+  apply-stats: true
+  apply-potions: true
+  include-ender-chest: true
+  include-offhand: true
+
+defaults:
+  # Fallback group when a world is not listed below.
+  world-group: default
+  # Delay before applying a loaded inventory (ticks). Helps avoid race conditions on login/world-change.
+  apply-delay-ticks: 2
+  # When no stored inventory exists for a context:
+  # - if joining fresh, keep the current inventory as the first snapshot
+  # - otherwise (context switch) start with a clean inventory
+  keep-join-inventory-if-new: true
+  start-empty-for-new-context: true
+
+world-groups:
+  default:
+    worlds:
+      - world
+      - world_nether
+      - world_the_end
+  # Example: group three worlds together
+  # abc:
+  #   worlds:
+  #     - world
+  #     - world_nether
+  #     - world_the_end
+
+gamemode-groups:
+  survival:
+    aliases: [survival]
+  creative:
+    aliases: [creative]
+  adventure:
+    aliases: [adventure]
+  spectator:
+    aliases: [spectator]

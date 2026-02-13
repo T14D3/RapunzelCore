@@ -9,6 +9,7 @@ modules:
   homes: false
   teamchat: true
   commands: true
+  inventories: true
   teleports: true
   chat: true
 
@@ -53,6 +54,7 @@ network:
     allowlist:
       - "rapunzellib:filesync:invalidate"
       - "db.cache_event"
+      - "inventory.sync"
 
 # Database configuration
 database:

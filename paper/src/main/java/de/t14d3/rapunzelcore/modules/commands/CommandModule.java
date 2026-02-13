@@ -6,17 +6,18 @@ import de.t14d3.rapunzelcore.RapunzelCore;
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
 import de.t14d3.rapunzelcore.util.ReflectionsUtil;
 import de.t14d3.rapunzellib.config.YamlConfig;
+import org.bukkit.event.Listener;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class CommandModule implements Module {
+public class CommandModule implements Module, Listener {
+    private RapunzelCore core;
     private boolean enabled = false;
     private Set<Command> registeredCommands = new HashSet<>();
     private YamlConfig config;
 
-    @Override
     public Environment getEnvironment() {
         return Environment.PAPER;
     }
@@ -25,12 +26,11 @@ public class CommandModule implements Module {
         return clazz.getSimpleName().toLowerCase().replace("command", "");
     }
 
-    @Override
     public void enable(RapunzelCore core, Environment environment) {
         if (enabled) return;
         if (environment != Environment.PAPER) return;
         enabled = true;
-        RapunzelPaperCore plugin = (RapunzelPaperCore) core;
+        RapunzelPaperCore paperCore = (RapunzelPaperCore) core;
 
         config = loadConfig();
 
@@ -42,11 +42,10 @@ public class CommandModule implements Module {
         });
 
         registeredCommands = ReflectionsUtil.instantiateSubTypes(Command.class, commands,
-                command -> (config.getBoolean(name(command), true)),"register"
+                command -> (config.getBoolean(name(command), true)), "register"
         );
     }
 
-    @Override
     public void disable(RapunzelCore core, Environment environment) {
         if (!enabled) return;
         // Unregister all registered commands
@@ -57,17 +56,14 @@ public class CommandModule implements Module {
         enabled = false;
     }
 
-    @Override
-    public String getName() {
-        return "commands";
-    }
-
-    @Override
     public boolean isEnabled() {
         return enabled;
     }
 
-    @Override
+    public String getName() {
+        return "commands";
+    }
+
     public Map<String, String> getPermissions() {
         return Map.ofEntries(
                 Map.entry("rapunzelcore.anvil", "op"),
@@ -100,8 +96,34 @@ public class CommandModule implements Module {
                 Map.entry("rapunzelcore.speed", "op"),
                 Map.entry("rapunzelcore.uinfo", "op"),
                 Map.entry("rapunzelcore.vanish", "op"),
-                Map.entry("rapunzelcore.vanish.see", "op")
+                Map.entry("rapunzelcore.vanish.see", "op"),
+                // New commands permissions
+                Map.entry("rapunzelcore.commands.ptime", "op"),
+                Map.entry("rapunzelcore.commands.ptime.others", "op"),
+                Map.entry("rapunzelcore.commands.pweather", "op"),
+                Map.entry("rapunzelcore.commands.pweather.others", "op"),
+                Map.entry("rapunzelcore.commands.hat", "op"),
+                Map.entry("rapunzelcore.commands.hat.others", "op"),
+                Map.entry("rapunzelcore.commands.skull", "op"),
+                Map.entry("rapunzelcore.commands.skull.others", "op"),
+                Map.entry("rapunzelcore.commands.trash", "op"),
+                Map.entry("rapunzelcore.commands.recipe", "op")
         );
     }
 
+    @Override
+    public void disable() {
+        if (!enabled) return;
+        enabled = false;
+        // Unregister all commands
+        for (Command command : registeredCommands) {
+            command.unregister();
+        }
+        registeredCommands.clear();
+    }
+
+    @Override
+    public void enable(RapunzelCore core) {
+        enable(core, Environment.PAPER);
+    }
 }

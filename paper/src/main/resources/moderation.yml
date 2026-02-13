@@ -1,0 +1,132 @@
+# ============================================
+# RapunzelCore Moderation Configuration
+# ============================================
+
+# Mute settings
+mute:
+  # Default mute duration when no duration is specified (in minutes)
+  default-duration: 60
+  
+  # Maximum mute duration allowed (in minutes, 0 = unlimited)
+  max-duration: 10080
+  
+  # Whether to prevent muted players from using commands
+  block-commands: true
+  
+  # List of commands muted players can still use
+  allowed-commands:
+    - msg
+    - tell
+    - whisper
+    - help
+    - rules
+  
+  # Message to show when muted player tries to chat
+  mute-message: "<red>You are muted and cannot chat."
+  
+  # Whether to log all mute actions to console
+  log-actions: true
+
+# Jail settings
+jail:
+  # Default jail duration when no duration is specified (in minutes)
+  default-duration: 30
+  
+  # Maximum jail duration allowed (in minutes, 0 = unlimited)
+  max-duration: 1440
+  
+  # Jail location format: world,x,y,z,yaw,pitch
+  # Set via /setjail command in-game
+  location: ""
+  
+  # Whether jailed players can use commands
+  allow-commands: false
+  
+  # List of commands jailed players can use
+  allowed-commands:
+    - msg
+    - tell
+    - help
+  
+  # Whether to prevent jailed players from teleporting
+  prevent-teleport: true
+  
+  # Whether to teleport player back to jail if they try to leave
+  enforce-boundary: true
+  
+  # Radius around jail location to enforce (in blocks)
+  boundary-radius: 10
+  
+  # Whether to clear inventory when jailed
+  clear-inventory: false
+  
+  # Whether to log all jail actions to console
+  log-actions: true
+
+# Warning settings
+warn:
+  # Maximum number of warnings before automatic action is taken
+  max-warnings: 3
+  
+  # Action to take when max warnings is reached: kick, mute, ban, jail
+  warning-limit-action: kick
+  
+  # Duration for automatic mute/jail action (in minutes, 0 = permanent)
+  auto-action-duration: 60
+  
+  # Whether warnings expire after a certain time
+  expire-enabled: true
+  
+  # Warning expiration time (in days, 0 = never)
+  expire-after-days: 30
+  
+  # Whether to notify online staff when a player is warned
+  notify-staff: true
+  
+  # Whether to log all warning actions to console
+  log-actions: true
+
+# Ban settings
+ban:
+  # Default ban message shown to banned players
+  default-message: "You have been banned from this server."
+  
+  # Whether to allow IP bans
+  allow-ip-bans: true
+  
+  # Whether to broadcast ban/unban actions to all players
+  broadcast-actions: true
+  
+  # Whether to log all ban actions to console
+  log-actions: true
+  
+  # Whether to check for ban evasion (same IP)
+  check-ban-evasion: true
+  
+  # Message to show when ban evasion is detected
+  evasion-message: "Ban evasion detected. Your IP has been banned."
+
+# Kick settings
+kick:
+  # Default kick message
+  default-message: "You have been kicked from the server."
+  
+  # Whether to broadcast kick actions to all players
+  broadcast-actions: true
+  
+  # Whether to log all kick actions to console
+  log-actions: true
+
+# General moderation settings
+moderation:
+  # Permission that allows bypassing moderation actions
+  bypass-permission: "rapunzelcore.moderation.bypass"
+  
+  # Permission required to receive moderation notifications
+  notify-permission: "rapunzelcore.moderation.notify"
+  
+  # Whether to store moderation history in database
+  store-history: true
+  
+  # How long to keep moderation history (in days, 0 = forever)
+  history-retention-days: 365

@@ -34,7 +34,7 @@ final class PendingTeleportsRepository extends EntityRepository<PendingTeleport>
     }
 
     static List<PendingTeleport> findForPlayer(String playerUuid) {
-        if (playerUuid == null || playerUuid.isBlank()) return List.of();       
+        if (playerUuid == null || playerUuid.isBlank()) return List.of();
         return CoreDatabase.locked(() -> instance.findBy("playerUuid", playerUuid).stream()
             .sorted(Comparator.comparingLong(PendingTeleport::getCreatedAt).reversed())
             .toList()

@@ -1,6 +1,7 @@
 package de.t14d3.rapunzelcore.modules.commands;
 
 import de.t14d3.rapunzelcore.RapunzelCore;
+import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.EntitySelectorArgument;
@@ -10,12 +11,12 @@ import org.bukkit.entity.Player;
 public class PlaytimeCommand implements Command {
 
     public void register() {
-        RapunzelPaperCore plugin = (RapunzelPaperCore) RapunzelCore.getInstance();
+        RapunzelPaperCore core = (RapunzelPaperCore) RapunzelCore.getInstance();
         new CommandAPICommand("playtime")
                 .withOptionalArguments(new EntitySelectorArgument.OnePlayer("player")
                         .withPermission("rapunzelcore.playtime.others")
                         .replaceSuggestions((sender, builder) -> {
-                            plugin.getServer().getOnlinePlayers().forEach(p -> builder.suggest(p.getName()));
+                            core.getServer().getOnlinePlayers().forEach(p -> builder.suggest(p.getName()));
                             return builder.buildFuture();
                         })
                 )
@@ -26,10 +27,10 @@ public class PlaytimeCommand implements Command {
                     int ticks = target.getStatistic(Statistic.PLAY_ONE_MINUTE);
                     long seconds = ticks / 20L;
                     String formattedTime = formatPlaytime(seconds);
-                    executor.sendMessage(plugin.getMessageHandler().getMessage("commands.playtime.success", target.getName(), formattedTime));
+                    executor.sendMessage(core.getMessageHandler().getMessage("commands.playtime.success", target.getName(), formattedTime));
                     return Command.SINGLE_SUCCESS;
                 })
-                .register(plugin);
+                .register(core);
     }
 
     private String formatPlaytime(long totalSeconds) {

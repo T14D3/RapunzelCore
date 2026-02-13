@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChatListener implements Listener {
-    private final RapunzelPaperCore plugin;
+    private final RapunzelPaperCore core;
     private final ChannelManager channelManager;
     private final PaperChannelBroadcaster broadcaster;
     private final List<String> commands = List.of(
@@ -26,19 +26,19 @@ public class ChatListener implements Listener {
             "whisper"
     );
 
-    public ChatListener(RapunzelPaperCore plugin, ChannelManager channelManager, PaperChannelBroadcaster broadcaster) {
-        this.plugin = plugin;
+    public ChatListener(RapunzelPaperCore core, ChannelManager channelManager, PaperChannelBroadcaster broadcaster) {
+        this.core = core;
         this.channelManager = channelManager;
         this.broadcaster = broadcaster;
 
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
+        core.getServer().getPluginManager().registerEvents(this, core);
     }
 
     @EventHandler
     public void onPlayerChat(AsyncChatEvent event) {
         org.bukkit.entity.Player player = event.getPlayer();
         Component message = event.originalMessage();
-        Bukkit.getScheduler().runTask(plugin, () -> {
+        Bukkit.getScheduler().runTask(core, () -> {
             Channel channel = channelManager.getMainChannel(Utils.player(player));
             if (channel == null) {
                 return;
@@ -63,10 +63,10 @@ public class ChatListener implements Listener {
         String senderName = event.getPlayer().getName();
         String receiverName = split[1];
         String message = split[2];
-        Component socialSpyMessage = plugin.getMessageHandler()
+        Component socialSpyMessage = core.getMessageHandler()
             .getMessage("commands.socialspy.message", senderName, receiverName, message);
 
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        Bukkit.getScheduler().runTaskAsynchronously(core, () -> {
             List<org.bukkit.entity.Player> spies = new ArrayList<>();
             for (org.bukkit.entity.Player online : Bukkit.getOnlinePlayers()) {
                 if (online.getUniqueId().equals(event.getPlayer().getUniqueId())) continue;
@@ -75,7 +75,7 @@ public class ChatListener implements Listener {
                 spies.add(online);
             }
             if (spies.isEmpty()) return;
-            Bukkit.getScheduler().runTask(plugin, () -> spies.forEach(p -> p.sendMessage(socialSpyMessage)));
+            Bukkit.getScheduler().runTask(core, () -> spies.forEach(p -> p.sendMessage(socialSpyMessage)));
         });
     }
 

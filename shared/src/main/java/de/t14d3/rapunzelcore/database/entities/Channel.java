@@ -179,6 +179,10 @@ public class Channel {
         this.members = (members != null) ? members : new java.util.LinkedHashSet<>();
     }
 
+    public void addMember(PlayerEntity playerEntity) {
+        this.members.add(playerEntity);
+    }
+
     /**
      * Channel type enum for different channel behaviors
      */

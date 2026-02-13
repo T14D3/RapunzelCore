@@ -1,0 +1,47 @@
+# Item Frame Tools Module Configuration
+#
+# This module provides enhanced item frame management:
+# - Toggle visibility (make frames invisible)
+# - Lock/unlock frames (prevent item removal/rotation)
+# - Pass-through interactions to containers behind frames
+
+# Maximum distance for targeting item frames with commands
+max-distance: 5.0
+
+# Pass-through settings
+pass-through:
+  # Enable pass-through to containers behind item frames
+  enabled: true
+  
+  # Require sneaking to pass through
+  require-sneak: true
+  
+  # Only pass through if frame has an item
+  require-item: true
+
+# Sneak-click toggle settings
+sneak-click-toggle:
+  # Enable sneak-click toggle for invisibility
+  enabled: true
+  
+  # The item to use for toggling (default: shears)
+  # Use the Material name (e.g., SHEARS, STICK, BLAZE_ROD)
+  toggle-item: SHEARS
+  
+  # Require sneaking to toggle
+  require-sneak: true
+  
+  # Only allow players with permission to toggle
+  permission: rapunzelcore.itemframe.invisible
+
+# Visual feedback settings
+visual-feedback:
+  # Show particles when locking/unlocking
+  particles: true
+  
+  # Play sounds when toggling
+  sounds: true
+
+# Messages (can be customized, use MiniMessage format)
+messages:
+  prefix: "<dark_gray>[<aqua>ItemFrame<dark_gray>] <reset>"

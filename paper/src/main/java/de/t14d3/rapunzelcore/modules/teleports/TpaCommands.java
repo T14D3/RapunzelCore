@@ -1,6 +1,7 @@
 package de.t14d3.rapunzelcore.modules.teleports;
 
 import com.destroystokyo.paper.profile.PlayerProfile;
+import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
 import de.t14d3.rapunzelcore.database.CoreDatabase;
 import de.t14d3.rapunzelcore.database.entities.PlayerEntity;
@@ -34,10 +35,10 @@ import static de.t14d3.rapunzelcore.database.CoreDatabase.flushAsync;
 public class TpaCommands implements Command {
     private static final long REQUEST_EXPIRE_MS = 60_000L;
 
-    private final RapunzelPaperCore plugin;
+    private final RapunzelPaperCore core;
 
-    public TpaCommands(RapunzelPaperCore plugin) {
-        this.plugin = plugin;
+    public TpaCommands(RapunzelPaperCore core) {
+        this.core = core;
         register();
     }
 
@@ -52,7 +53,7 @@ public class TpaCommands implements Command {
                 createRequest(player, targetName, false);
                 return Command.SINGLE_SUCCESS;
             })
-            .register(plugin);
+            .register(core);
 
         new CommandAPICommand("tpahere")
             .withArguments(new StringArgument("target"))
@@ -63,7 +64,7 @@ public class TpaCommands implements Command {
                 createRequest(player, targetName, true);
                 return Command.SINGLE_SUCCESS;
             })
-            .register(plugin);
+            .register(core);
 
         new CommandAPICommand("tpaccept")
             .withOptionalArguments(new StringArgument("requester"))
@@ -74,7 +75,7 @@ public class TpaCommands implements Command {
                 acceptRequest(player, requesterName);
                 return Command.SINGLE_SUCCESS;
             })
-            .register(plugin);
+            .register(core);
 
         new CommandAPICommand("tpdeny")
             .withOptionalArguments(new StringArgument("requester"))
@@ -85,7 +86,7 @@ public class TpaCommands implements Command {
                 denyRequest(player, requesterName);
                 return Command.SINGLE_SUCCESS;
             })
-            .register(plugin);
+            .register(core);
 
         new CommandAPICommand("tptoggle")
             .withFullDescription("Toggle teleport requests on/off")
@@ -94,12 +95,12 @@ public class TpaCommands implements Command {
                 boolean enabled = isToggled(player);
                 setToggled(player, !enabled);
                 Component state = !enabled
-                    ? plugin.getMessageHandler().getMessage("general.toggle.on")
-                    : plugin.getMessageHandler().getMessage("general.toggle.off");
-                player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tptoggle.toggled", state));
+                    ? core.getMessageHandler().getMessage("general.toggle.on")
+                    : core.getMessageHandler().getMessage("general.toggle.off");
+                player.sendMessage(core.getMessageHandler().getMessage("teleports.tptoggle.toggled", state));
                 return Command.SINGLE_SUCCESS;
             })
-            .register(plugin);
+            .register(core);
 
         new CommandAPICommand("tphere")
             .withArguments(new StringArgument("target"))
@@ -109,15 +110,15 @@ public class TpaCommands implements Command {
                 String targetName = (String) args.get("target");
                 Player target = Bukkit.getPlayerExact(targetName);
                 if (target == null) {
-                    player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid", targetName));
+                    player.sendMessage(core.getMessageHandler().getMessage("general.error.player.invalid", targetName));
                     return Command.SINGLE_SUCCESS;
                 }
                 target.teleport(player.getLocation());
-                player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tphere.success", target.getName()));
-                target.sendMessage(plugin.getMessageHandler().getMessage("teleports.tphere.teleported_by", player.getName()));
+                player.sendMessage(core.getMessageHandler().getMessage("teleports.tphere.success", target.getName()));
+                target.sendMessage(core.getMessageHandler().getMessage("teleports.tphere.teleported_by", player.getName()));
                 return Command.SINGLE_SUCCESS;
             })
-            .register(plugin);
+            .register(core);
 
         // Admin: /tpo and /tpohere (offline supported) - unchanged
         AsyncPlayerProfileArgument asyncPlayerProfileArgument = new AsyncPlayerProfileArgument("target");
@@ -128,38 +129,38 @@ public class TpaCommands implements Command {
             .executesPlayer((player, args) -> {
                 CompletableFuture<List<PlayerProfile>> profileList = args.getByArgument(asyncPlayerProfileArgument);
                 if (profileList == null) {
-                    player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
+                    player.sendMessage(core.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
                     return Command.SINGLE_SUCCESS;
                 }
-                profileList.thenAccept(profiles -> Bukkit.getScheduler().runTask(plugin, () -> {
+                profileList.thenAccept(profiles -> Bukkit.getScheduler().runTask(core, () -> {
                     if (profiles.isEmpty()) {
-                        player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid"));
+                        player.sendMessage(core.getMessageHandler().getMessage("general.error.player.invalid"));
                         return;
                     }
                     PlayerProfile profile = profiles.getFirst();
                     if (profile == null || profile.getId() == null) {
-                        player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid"));
+                        player.sendMessage(core.getMessageHandler().getMessage("general.error.player.invalid"));
                         return;
                     }
                     OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(profile.getId());
                     if (!offlineTarget.hasPlayedBefore()) {
-                        player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid"));
+                        player.sendMessage(core.getMessageHandler().getMessage("general.error.player.invalid"));
                         return;
                     }
                     Location location = offlineTarget.getLocation();
                     if (location != null) {
                         player.teleport(location);
-                        player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpo.success", profile.getName()));
+                        player.sendMessage(core.getMessageHandler().getMessage("teleports.tpo.success", profile.getName()));
                     }
                 })).exceptionally(e -> {
-                    Bukkit.getScheduler().runTask(plugin, () ->
-                        player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid"))
+                    Bukkit.getScheduler().runTask(core, () ->
+                        player.sendMessage(core.getMessageHandler().getMessage("general.error.player.invalid"))
                     );
                     return null;
                 });
                 return Command.SINGLE_SUCCESS;
             })
-            .register(plugin);
+            .register(core);
 
         new CommandAPICommand("tpohere")
             .withArguments(asyncPlayerProfileArgument)
@@ -168,22 +169,22 @@ public class TpaCommands implements Command {
             .executesPlayer((player, args) -> {
                 CompletableFuture<List<PlayerProfile>> profileList = args.getByArgument(asyncPlayerProfileArgument);
                 if (profileList == null) {
-                    player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
+                    player.sendMessage(core.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
                     return Command.SINGLE_SUCCESS;
                 }
-                profileList.thenAccept(profiles -> Bukkit.getScheduler().runTask(plugin, () -> {
+                profileList.thenAccept(profiles -> Bukkit.getScheduler().runTask(core, () -> {
                     if (profiles.isEmpty()) {
-                        player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
+                        player.sendMessage(core.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
                         return;
                     }
                     PlayerProfile profile = profiles.getFirst();
                     if (profile == null || profile.getId() == null) {
-                        player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
+                        player.sendMessage(core.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
                         return;
                     }
                     OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(profile.getId());
                     if (!offlineTarget.hasPlayedBefore()) {
-                        player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
+                        player.sendMessage(core.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
                         return;
                     }
                     if (offlineTarget.getPlayer() != null) {
@@ -191,17 +192,17 @@ public class TpaCommands implements Command {
                     } else {
                         Utils.setOfflineLocation(profile, player.getLocation());
                     }
-                    player.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpohere.success", profile.getName()));
+                    player.sendMessage(core.getMessageHandler().getMessage("teleports.tpohere.success", profile.getName()));
                 })).exceptionally(e -> {
-                    Bukkit.getScheduler().runTask(plugin, () -> {
-                        player.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
-                        plugin.getLogger().warning("Failed to teleport player to offline location: " + e.getCause().getMessage());
+                    Bukkit.getScheduler().runTask(core, () -> {
+                        player.sendMessage(core.getMessageHandler().getMessage("general.error.player.invalid", args.getRaw("target")));
+                        core.getLogger().warning("Failed to teleport player to offline location: " + e.getCause().getMessage());
                     });
                     return null;
                 });
                 return Command.SINGLE_SUCCESS;
             })
-            .register(plugin);
+            .register(core);
     }
 
     @Override
@@ -219,11 +220,11 @@ public class TpaCommands implements Command {
         Player localTarget = Bukkit.getPlayerExact(targetName);
         if (localTarget != null) {
             if (localTarget.getUniqueId().equals(requester.getUniqueId())) {
-                requester.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpa.error.self"));
+                requester.sendMessage(core.getMessageHandler().getMessage("teleports.tpa.error.self"));
                 return;
             }
             if (isToggled(localTarget)) {
-                requester.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpa.error.toggled", localTarget.getName()));
+                requester.sendMessage(core.getMessageHandler().getMessage("teleports.tpa.error.toggled", localTarget.getName()));
                 return;
             }
 
@@ -237,19 +238,19 @@ public class TpaCommands implements Command {
             );
 
             if (isTpaHere) {
-                requester.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpahere.sent", localTarget.getName()));
-                localTarget.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpahere.received", requester.getName()));
+                requester.sendMessage(core.getMessageHandler().getMessage("teleports.tpahere.sent", localTarget.getName()));
+                localTarget.sendMessage(core.getMessageHandler().getMessage("teleports.tpahere.received", requester.getName()));
             } else {
-                requester.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpa.sent", localTarget.getName()));
-                localTarget.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpa.received", requester.getName()));
+                requester.sendMessage(core.getMessageHandler().getMessage("teleports.tpa.sent", localTarget.getName()));
+                localTarget.sendMessage(core.getMessageHandler().getMessage("teleports.tpa.received", requester.getName()));
             }
             scheduleExpire(requester.getUniqueId().toString(), localTarget.getUniqueId().toString(), localTarget.getName());
             return;
         }
 
-        lookupNetworkPlayer(targetName).thenAccept(info -> Bukkit.getScheduler().runTask(plugin, () -> {
+        lookupNetworkPlayer(targetName).thenAccept(info -> Bukkit.getScheduler().runTask(core, () -> {
             if (info == null || info.uuid() == null || info.serverName() == null || info.serverName().isBlank()) {
-                requester.sendMessage(plugin.getMessageHandler().getMessage("general.error.player.invalid", targetName));
+                requester.sendMessage(core.getMessageHandler().getMessage("general.error.player.invalid", targetName));
                 return;
             }
 
@@ -258,13 +259,13 @@ public class TpaCommands implements Command {
             String resolvedTargetName = (info.name() != null && !info.name().isBlank()) ? info.name() : targetName;
 
             if (targetId.equals(requester.getUniqueId())) {
-                requester.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpa.error.self"));
+                requester.sendMessage(core.getMessageHandler().getMessage("teleports.tpa.error.self"));
                 return;
             }
 
             PlayerEntity dbTarget = PlayerRepository.getPlayer(targetId);
             if (dbTarget != null && dbTarget.isTpToggle()) {
-                requester.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpa.error.toggled", resolvedTargetName));
+                requester.sendMessage(core.getMessageHandler().getMessage("teleports.tpa.error.toggled", resolvedTargetName));
                 return;
             }
 
@@ -278,10 +279,10 @@ public class TpaCommands implements Command {
             );
 
             if (isTpaHere) {
-                requester.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpahere.sent", resolvedTargetName));
+                requester.sendMessage(core.getMessageHandler().getMessage("teleports.tpahere.sent", resolvedTargetName));
                 notifyOnServer("teleports.tpahere.received", targetServer, targetId, requester.getName());
             } else {
-                requester.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpa.sent", resolvedTargetName));
+                requester.sendMessage(core.getMessageHandler().getMessage("teleports.tpa.sent", resolvedTargetName));
                 notifyOnServer("teleports.tpa.received", targetServer, targetId, requester.getName());
             }
             scheduleExpire(requester.getUniqueId().toString(), targetId.toString(), resolvedTargetName);
@@ -308,7 +309,7 @@ public class TpaCommands implements Command {
 
     private void queueTeleportToPlayer(UUID moverUuid, String targetServer, UUID targetPlayerUuid) {
         if (moverUuid == null || targetPlayerUuid == null) return;
-        if (targetServer == null || targetServer.isBlank()) return;        
+        if (targetServer == null || targetServer.isBlank()) return;
 
         String moverUuidString = moverUuid.toString();
         String arg = targetPlayerUuid.toString();
@@ -317,9 +318,9 @@ public class TpaCommands implements Command {
             targetServer,
             TeleportsNetwork.TeleportsActions.TPA_TO_PLAYER,
             arg
-        )).whenComplete((ignored, error) -> Bukkit.getScheduler().runTask(plugin, () -> {
+        )).whenComplete((ignored, error) -> Bukkit.getScheduler().runTask(core, () -> {
             if (error != null) {
-                plugin.getLogger().warning("Failed to queue teleport for " + moverUuidString + ": " + error.getMessage());
+                core.getLogger().warning("Failed to queue teleport for " + moverUuidString + ": " + error.getMessage());
                 return;
             }
             connectPlayer(moverUuid, targetServer);
@@ -331,7 +332,7 @@ public class TpaCommands implements Command {
         if (targetServer == null || targetServer.isBlank()) return;
         if (TeleportsNetwork.isLocal(targetServer)) return;
 
-        new NetworkEventBus(plugin.getMessenger()).sendToProxy(
+        new NetworkEventBus(core.getMessenger()).sendToProxy(
             NetworkChannels.TELEPORTS_PROXY,
             new ProxyConnectRequest(playerUuid.toString(), targetServer)
         );
@@ -344,13 +345,13 @@ public class TpaCommands implements Command {
         if (TeleportsNetwork.isLocal(serverName)) {
             Player local = Bukkit.getPlayer(playerUuid);
             if (local != null) {
-                local.sendMessage(plugin.getMessageHandler().getMessage(messageKey, args));
+                local.sendMessage(core.getMessageHandler().getMessage(messageKey, args));
             }
             return;
         }
 
         if (serverName == null || serverName.isBlank()) return;
-        new NetworkEventBus(plugin.getMessenger()).sendToServer(
+        new NetworkEventBus(core.getMessenger()).sendToServer(
             NetworkChannels.TELEPORTS_BACKEND,
             serverName,
             NotifyPlayerMessage.of(playerUuid.toString(), messageKey, args)
@@ -375,14 +376,14 @@ public class TpaCommands implements Command {
                 Player requester = Bukkit.getPlayer(requesterId);
                 if (requester != null) {
                     target.teleport(requester.getLocation());
-                    target.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpaccept.accepted", req.getRequesterName()));
-                    requester.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpaccept.accepted_by", target.getName()));
+                    target.sendMessage(core.getMessageHandler().getMessage("teleports.tpaccept.accepted", req.getRequesterName()));
+                    requester.sendMessage(core.getMessageHandler().getMessage("teleports.tpaccept.accepted_by", target.getName()));
                 }
                 return;
             }
 
             queueTeleportToPlayer(target.getUniqueId(), requesterServer, requesterId);
-            target.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpaccept.accepted", req.getRequesterName()));
+            target.sendMessage(core.getMessageHandler().getMessage("teleports.tpaccept.accepted", req.getRequesterName()));
             notifyOnServer("teleports.tpaccept.accepted_by", requesterServer, requesterId, target.getName());
             return;
         }
@@ -392,14 +393,14 @@ public class TpaCommands implements Command {
             Player requester = Bukkit.getPlayer(requesterId);
             if (requester != null) {
                 requester.teleport(target.getLocation());
-                target.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpaccept.accepted", req.getRequesterName()));
-                requester.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpaccept.accepted_by", target.getName()));
+                target.sendMessage(core.getMessageHandler().getMessage("teleports.tpaccept.accepted", req.getRequesterName()));
+                requester.sendMessage(core.getMessageHandler().getMessage("teleports.tpaccept.accepted_by", target.getName()));
                 return;
             }
         }
 
         queueTeleportToPlayer(requesterId, targetServer, target.getUniqueId());
-        target.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpaccept.accepted", req.getRequesterName()));
+        target.sendMessage(core.getMessageHandler().getMessage("teleports.tpaccept.accepted", req.getRequesterName()));
         notifyOnServer("teleports.tpaccept.accepted_by", requesterServer, requesterId, target.getName());
     }
 
@@ -412,24 +413,24 @@ public class TpaCommands implements Command {
         TeleportRequestsRepository.delete(req.getId());
 
         UUID requesterId = UUID.fromString(req.getRequesterUuid());
-        target.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpdeny.denied_request", req.getRequesterName()));
+        target.sendMessage(core.getMessageHandler().getMessage("teleports.tpdeny.denied_request", req.getRequesterName()));
         notifyOnServer("teleports.tpdeny.denied", req.getRequesterServer(), requesterId, target.getName());
     }
 
     private TeleportRequest selectRequest(Player target, List<TeleportRequest> requests, String requesterName, boolean deny) {
         if (requests.isEmpty()) {
-            if (deny) target.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpdeny.error.no_request"));
-            else target.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpaccept.error.no_request"));
+            if (deny) target.sendMessage(core.getMessageHandler().getMessage("teleports.tpdeny.error.no_request"));
+            else target.sendMessage(core.getMessageHandler().getMessage("teleports.tpaccept.error.no_request"));
             return null;
         }
 
         if (requesterName == null) {
             if (requests.size() == 1) return requests.getFirst();
-            if (deny) target.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpdeny.error.multiple_requests"));
-            else target.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpaccept.error.multiple_requests"));
+            if (deny) target.sendMessage(core.getMessageHandler().getMessage("teleports.tpdeny.error.multiple_requests"));
+            else target.sendMessage(core.getMessageHandler().getMessage("teleports.tpaccept.error.multiple_requests"));
             for (TeleportRequest r : requests) {
-                if (deny) target.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpdeny.list_entry", r.getRequesterName()));
-                else target.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpaccept.list_entry", r.getRequesterName()));
+                if (deny) target.sendMessage(core.getMessageHandler().getMessage("teleports.tpdeny.list_entry", r.getRequesterName()));
+                else target.sendMessage(core.getMessageHandler().getMessage("teleports.tpaccept.list_entry", r.getRequesterName()));
             }
             return null;
         }
@@ -438,8 +439,8 @@ public class TpaCommands implements Command {
             if (r.getRequesterName() != null && r.getRequesterName().equalsIgnoreCase(requesterName)) return r;
         }
 
-        if (deny) target.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpdeny.error.no_request_from", requesterName));
-        else target.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpaccept.error.no_request_from", requesterName));
+        if (deny) target.sendMessage(core.getMessageHandler().getMessage("teleports.tpdeny.error.no_request_from", requesterName));
+        else target.sendMessage(core.getMessageHandler().getMessage("teleports.tpaccept.error.no_request_from", requesterName));
         return null;
     }
 
@@ -452,7 +453,7 @@ public class TpaCommands implements Command {
     }
 
     private void scheduleExpire(String requesterUuid, String targetUuid, String targetName) {
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        Bukkit.getScheduler().runTaskLater(core, () -> {
             List<TeleportRequest> requests = TeleportRequestsRepository.findForTarget(targetUuid);
             long cutoff = System.currentTimeMillis() - REQUEST_EXPIRE_MS;
             for (TeleportRequest req : requests) {
@@ -461,7 +462,7 @@ public class TpaCommands implements Command {
                 TeleportRequestsRepository.delete(req.getId());
                 Player requester = Bukkit.getPlayer(UUID.fromString(requesterUuid));
                 if (requester != null) {
-                    requester.sendMessage(plugin.getMessageHandler().getMessage("teleports.tpa.expired", targetName));
+                    requester.sendMessage(core.getMessageHandler().getMessage("teleports.tpa.expired", targetName));
                 }
             }
         }, 20L * 60);

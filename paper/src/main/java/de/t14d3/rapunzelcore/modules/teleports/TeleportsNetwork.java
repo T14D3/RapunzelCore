@@ -1,5 +1,6 @@
 package de.t14d3.rapunzelcore.modules.teleports;
 
+import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzellib.Rapunzel;
 import de.t14d3.rapunzellib.network.Messenger;
 import de.t14d3.rapunzellib.network.info.NetworkInfoService;
@@ -55,4 +56,3 @@ final class TeleportsNetwork {
         }
     }
 }
-

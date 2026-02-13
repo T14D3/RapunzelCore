@@ -1,0 +1,124 @@
+# RapunzelCore Configuration
+# For full documentation, visit: https://docs.t14d3.de/rapunzelcore
+
+# Network Configuration
+network:
+  # Server name used for identification in multi-server setups
+  # Leave empty to auto-detect from proxy
+  serverName: ""
+
+  # Transport Priority - Controls which network transport to use
+  # Options:
+  #   REDIS_FIRST      - Try Redis first, fallback to plugin messaging (RECOMMENDED)
+  #   PLUGIN_FIRST     - Try plugin messaging first, Redis as backup
+  #   REDIS_ONLY       - Redis only, fail if unavailable
+  #   PLUGIN_ONLY      - Plugin messaging only (single-server setups)
+  transport-priority: "REDIS_FIRST"
+
+  # Redis Configuration (Recommended for multi-server setups)
+  redis:
+    # Enable Redis for improved performance and reliability
+    # Highly recommended for production multi-server environments
+    enabled: false
+
+    # Redis server host
+    host: "localhost"
+
+    # Redis server port
+    port: 6379
+
+    # Redis password (leave empty if no password)
+    password: ""
+
+    # Redis database number (0-15)
+    database: 0
+
+    # Connection timeout in milliseconds
+    timeout: 2000
+
+  # Plugin Messaging Configuration (BungeeCord/Velocity)
+  plugin-messaging:
+    # Plugin channel name
+    channel: "rapunzel:main"
+
+# Database Configuration
+database:
+  # JDBC connection string
+  # Default uses SQLite (local file)
+  # For MySQL: jdbc:mysql://localhost:3306/rapunzelcore?user=root&password=secret
+  jdbc: "jdbc:sqlite:plugins/RapunzelCore/rapunzelcore.db"
+
+  # Connection pool settings (for MySQL)
+  pool:
+    # Maximum connections in pool
+    max-size: 10
+
+    # Minimum idle connections
+    min-idle: 2
+
+    # Connection timeout (seconds)
+    timeout: 30
+
+# Network Queue Configuration
+# Used for reliable message delivery when Redis is not available
+network-queue:
+  # Enable database-backed message queue
+  enabled: true
+
+  # How often to flush queued messages (seconds)
+  flush-period: 5
+
+  # Maximum batch size per flush
+  max-batch-size: 100
+
+  # Maximum message age before discarding (minutes)
+  max-age: 30
+
+  # Channels to queue (whitelist)
+  # Leave empty to queue all channels
+  channel-allowlist: []
+
+# Module Configuration
+# Enable/disable individual modules
+modules:
+  # Chat system with cross-server support
+  chat: false
+
+  # Join/leave messages
+  joinleave: false
+
+  # Teleportation commands (/tpa, /home, /warp)
+  teleports: false
+
+  # Inventory synchronization across servers
+  inventories: false
+
+  # Custom commands and scripts
+  script: false
+
+  # Command utilities (/craft, /anvil, etc.)
+  commands: false
+
+# Performance Settings
+performance:
+  # Enable async entity operations
+  async-entities: true
+
+  # Cache settings
+  cache:
+    # Entity cache TTL (seconds)
+    entity-ttl: 300
+
+    # Query cache TTL (seconds)
+    query-ttl: 60
+
+# Logging Settings
+logging:
+  # Log level: DEBUG, INFO, WARN, ERROR
+  level: "INFO"
+
+  # Log network events
+  network: true
+
+  # Log database queries (may impact performance)
+  queries: false

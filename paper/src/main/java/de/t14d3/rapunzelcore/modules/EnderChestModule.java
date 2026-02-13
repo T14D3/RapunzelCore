@@ -14,26 +14,23 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
-public class EnderChestModule implements Module {
+public class EnderChestModule implements Module, Listener {
+    private RapunzelCore core;
     private boolean enabled = false;
-    private RapunzelPaperCore plugin;
     private EnderChestListener listener;
 
-    @Override
     public Environment getEnvironment() {
         return Environment.PAPER;
     }
 
-    @Override
     public void enable(RapunzelCore core, Environment environment) {
         if (enabled) return;
-        this.plugin = (RapunzelPaperCore) core;
+        this.core = core;
         enabled = true;
         listener = new EnderChestListener(this);
-        plugin.getServer().getPluginManager().registerEvents(listener, plugin);
+        ((RapunzelPaperCore) core).getServer().getPluginManager().registerEvents(listener, ((RapunzelPaperCore) core));
     }
 
-    @Override
     public void disable(RapunzelCore core, Environment environment) {
         if (!enabled) return;
 
@@ -44,13 +41,21 @@ public class EnderChestModule implements Module {
     }
 
     @Override
-    public String getName() {
-        return "enderchest";
+    public void enable(RapunzelCore core) {
+        enable(core, Environment.PAPER);
     }
 
     @Override
+    public void disable() {
+        disable(core, Environment.PAPER);
+    }
+
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public String getName() {
+        return "enderchest";
     }
 
     /**

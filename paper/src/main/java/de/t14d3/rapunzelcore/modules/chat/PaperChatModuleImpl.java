@@ -1,6 +1,7 @@
 package de.t14d3.rapunzelcore.modules.chat;
 
 import de.t14d3.rapunzelcore.RapunzelCore;
+import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
 
 /**

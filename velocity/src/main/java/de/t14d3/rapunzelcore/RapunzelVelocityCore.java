@@ -23,6 +23,8 @@ import de.t14d3.rapunzelcore.configsync.CoreConfigSync;
 import de.t14d3.rapunzelcore.database.CoreDatabase;
 import de.t14d3.rapunzelcore.database.entities.Channel;
 import de.t14d3.rapunzelcore.database.entities.Home;
+import de.t14d3.rapunzelcore.database.entities.InventoryLock;
+import de.t14d3.rapunzelcore.database.entities.InventoryProfile;
 import de.t14d3.rapunzelcore.database.entities.PendingTeleport;
 import de.t14d3.rapunzelcore.database.entities.PlayerEntity;
 import de.t14d3.rapunzelcore.database.entities.Warp;
@@ -40,6 +42,7 @@ import org.slf4j.Logger;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
 
 @Plugin(
@@ -53,7 +56,7 @@ public class RapunzelVelocityCore implements RapunzelCore {
     private final ProxyServer server;
     private final Logger logger;
     private final Path dataDirectory;
-    
+
     private MessageHandler messages;
     private static RapunzelVelocityCore instance;
     private SpoolDatabase coreDatabase;
@@ -61,6 +64,7 @@ public class RapunzelVelocityCore implements RapunzelCore {
     private YamlConfig config;
     private Messenger messenger;
     private AutoCloseable networking;
+    private ModuleManager moduleManager;
 
     @Inject
     public RapunzelVelocityCore(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) {
@@ -74,29 +78,39 @@ public class RapunzelVelocityCore implements RapunzelCore {
         instance = this;
         CoreContext.setInstance(this);
 
-        VelocityRapunzelBootstrap.bootstrap(this, server, logger, dataDirectory);
-        Rapunzel.context().services().register(RapunzelCore.class, this);       
-
-        reloadConfig();
-        messages = new MessageHandler();
-        String jdbc = config.getString("database.jdbc", "jdbc:sqlite:plugins/RapunzelCore/rapunzelcore.db");
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (ClassNotFoundException e) {
             logger.error("Failed to load MySQL driver", e);
             throw new RuntimeException("Failed to load MySQL driver", e);
         }
-        coreDatabase = SpoolDatabase.open(jdbc, logger, PlayerEntity.class, Home.class, Warp.class, Channel.class, TeleportRequest.class, PendingTeleport.class, NetworkOutboxMessage.class);
-        CoreDatabase.init(coreDatabase);
-        Rapunzel.context().services().register(SpoolDatabase.class, coreDatabase);
 
-        setupNetworking();
-        CoreDatabase.startEntitySync(messenger);
+        VelocityRapunzelBootstrap.bootstrap(this, server, logger, dataDirectory);
 
-        CoreConfigSync.bootstrap(this);
+        Rapunzel.context().services().register(RapunzelCore.class, this);
 
-        // Load modules from config
-        loadModules();
+        reloadConfig();
+        messages = new MessageHandler();
+
+        // Initialize module manager
+        this.moduleManager = new ModuleManager(this);
+
+        Rapunzel.context().scheduler().runLater(Duration.ofSeconds(1), () -> {
+            String jdbc = config.getString("database.jdbc", "jdbc:sqlite:plugins/RapunzelCore/rapunzelcore.db");
+            coreDatabase = SpoolDatabase.open(jdbc, logger, PlayerEntity.class, Home.class, Warp.class, Channel.class, TeleportRequest.class, PendingTeleport.class, InventoryProfile.class, InventoryLock.class, NetworkOutboxMessage.class);
+            CoreDatabase.init(coreDatabase);
+            Rapunzel.context().services().register(SpoolDatabase.class, coreDatabase);
+
+
+            setupNetworking();
+            CoreDatabase.startEntitySync(messenger);
+
+
+            CoreConfigSync.bootstrap(this);
+
+            // Load modules from config
+            loadModules();
+        });
 
         // Register core command
         CommandManager commandManager = server.getCommandManager();
@@ -108,6 +122,12 @@ public class RapunzelVelocityCore implements RapunzelCore {
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
         CoreConfigSync.shutdown();
+
+        // Disable all modules
+        if (moduleManager != null) {
+            moduleManager.disableAll();
+        }
+
         AutoCloseable closeable = networking;
         networking = null;
         if (closeable != null) {
@@ -147,8 +167,8 @@ public class RapunzelVelocityCore implements RapunzelCore {
 
 
     @Override
-    public List<Module> getModules() {
-        return ModuleManager.getModules();
+    public List<ModuleDescriptor> getModules() {
+        return moduleManager.getModules();
     }
 
     @Override
@@ -182,7 +202,7 @@ public class RapunzelVelocityCore implements RapunzelCore {
         return server.getCommandManager();
     }
 
-    public static class VelocityPlatformManager implements PlatformManager {    
+    public static class VelocityPlatformManager implements PlatformManager {
         private static final class NoopChatModuleImpl implements ChatModule.ChatModuleImpl {
             @Override
             public void initialize() {
@@ -202,8 +222,8 @@ public class RapunzelVelocityCore implements RapunzelCore {
         }
 
         @Override
-        public JoinLeaveModule.JoinLeaveModuleImpl createJoinLeaveModuleImpl(RapunzelCore core, boolean networkEnabled, java.nio.file.Path configPath) {
-            return new VelocityJoinLeaveModuleImpl((RapunzelVelocityCore) core, networkEnabled, configPath);
+        public JoinLeaveModule.JoinLeaveModuleImpl createJoinLeaveModuleImpl(RapunzelCore core, YamlConfig config, java.nio.file.Path configPath) {
+            return new VelocityJoinLeaveModuleImpl((RapunzelVelocityCore) core, config, configPath);
         }
 
     }
@@ -213,17 +233,21 @@ public class RapunzelVelocityCore implements RapunzelCore {
         return Environment.VELOCITY;
     }
 
-
-
-
-
+    /**
+     * Gets the module manager for this core instance.
+     * @return The module manager
+     */
+    public ModuleManager getModuleManager() {
+        return moduleManager;
+    }
 
     public void reloadPlugin() {
         // Disable all modules
-        for (Module module : ModuleManager.getModules()) {
-            getLogger().info("Disabling module: {}", module.getName());
-            module.disable(this, getEnvironment());
-            ModuleManager.disable(module.getName(), getEnvironment());
+        for (ModuleDescriptor descriptor : moduleManager.getModules()) {
+            if (descriptor.isEnabled()) {
+                getLogger().info("Disabling module: {}", descriptor.name());
+                moduleManager.disable(descriptor.name());
+            }
         }
 
         // Reload plugin configuration
@@ -239,16 +263,22 @@ public class RapunzelVelocityCore implements RapunzelCore {
     private void loadModules() {
         ReflectionsUtil.getSubTypes(Module.class).forEach(clazz -> {
             try {
-                Module module = clazz.getDeclaredConstructor().newInstance();
-                String name = module.getName();
-                ModuleManager.register(module);
-                if (getConfiguration().getBoolean("modules." + name, false)) {
-                    if (module.getEnvironment() == Environment.BOTH || module.getEnvironment() == getEnvironment()) {
-                        module.enable(this, getEnvironment());
-                        getLogger().info("Loaded module: {}", name);
-                    } else {
-                        getLogger().info("Skipping module {} (not compatible with {})", name, getEnvironment());
-                    }
+                ModuleDescriptor descriptor = moduleManager.register(clazz);
+                if (descriptor == null) {
+                    return;
+                }
+                String name = descriptor.name();
+                if (!getConfiguration().getBoolean("modules." + name, false)) {
+                    return;
+                }
+                if (!descriptor.supports(getEnvironment())) {
+                    getLogger().info("Skipping module {} (not compatible with {})", name, getEnvironment());
+                    return;
+                }
+                if (moduleManager.enable(name)) {
+                    getLogger().info("Loaded module: {}", name);
+                } else {
+                    getLogger().warn("Failed to load module {}", name);
                 }
             } catch (Exception e) {
                 getLogger().warn("Failed to load module {}: {}", clazz.getName(), e.getMessage());
@@ -301,8 +331,15 @@ public class RapunzelVelocityCore implements RapunzelCore {
                     queueConfig.flushPeriod(),
                     queueConfig.maxBatchSize(),
                     queueConfig.maxAge(),
-                    this::allBackendServers,
-                    this::hasCarrierOnBackend
+                    () -> server.getAllServers().stream().map(rs -> rs.getServerInfo().getName()).toList(),
+                    backendServerParam -> {
+        if (backendServerParam == null || backendServerParam.isBlank()) return false;
+        String needle = backendServerParam.trim();
+        return server.getAllPlayers().stream()
+            .anyMatch(p -> p.getCurrentServer()
+                .map(sc -> sc.getServerInfo().getName().equalsIgnoreCase(needle))
+                .orElse(false));
+    }
                 );
 
                     Rapunzel.context().services().register(Messenger.class, queued);
@@ -318,17 +355,12 @@ public class RapunzelVelocityCore implements RapunzelCore {
         networking = closeable;
     }
 
-    private List<String> allBackendServers() {
-        return server.getAllServers().stream().map(rs -> rs.getServerInfo().getName()).toList();
-    }
 
-    private boolean hasCarrierOnBackend(String backendServer) {
-        if (backendServer == null || backendServer.isBlank()) return false;
-        String needle = backendServer.trim();
-        return server.getAllPlayers().stream()
-            .anyMatch(p -> p.getCurrentServer()
-                .map(sc -> sc.getServerInfo().getName().equalsIgnoreCase(needle))
-                .orElse(false));
-    }
 
+
+
+    @Override
+    public Object getResourceProvider() {
+        return this;
+    }
 }

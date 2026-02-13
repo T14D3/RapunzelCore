@@ -9,19 +9,26 @@ import de.t14d3.rapunzellib.network.info.NetworkInfoClient;
 import de.t14d3.rapunzellib.platform.paper.PaperRapunzelBootstrap;
 import de.t14d3.rapunzellib.network.bootstrap.MessengerTransportBootstrap;
 import de.t14d3.rapunzelcore.commands.CoreCommand;
+import de.t14d3.rapunzelcore.config.ConfigValidator;
 import de.t14d3.rapunzelcore.database.CoreDatabase;
 import de.t14d3.rapunzelcore.database.entities.Channel;
 import de.t14d3.rapunzelcore.database.entities.Home;
+import de.t14d3.rapunzelcore.database.entities.InventoryLock;
+import de.t14d3.rapunzelcore.database.entities.InventoryProfile;
 import de.t14d3.rapunzelcore.database.entities.PendingTeleport;
 import de.t14d3.rapunzelcore.database.entities.PlayerEntity;
 import de.t14d3.rapunzelcore.database.entities.Warp;
 import de.t14d3.rapunzelcore.database.entities.TeleportRequest;
+import de.t14d3.rapunzelcore.database.entities.PlayerMute;
+import de.t14d3.rapunzelcore.database.entities.PlayerWarning;
 import de.t14d3.rapunzellib.network.queue.DbQueuedMessenger;
 import de.t14d3.rapunzellib.network.queue.NetworkOutboxMessage;
 import de.t14d3.rapunzellib.network.queue.NetworkQueueConfig;
 import de.t14d3.rapunzelcore.modules.chat.ChannelManager;
 import de.t14d3.rapunzelcore.modules.chat.ChatModule;
 import de.t14d3.rapunzelcore.modules.chat.PaperChatModuleImpl;
+import de.t14d3.rapunzelcore.modules.moderation.ModerationModule;
+import de.t14d3.rapunzelcore.modules.moderation.PaperModerationModuleImpl;
 import de.t14d3.rapunzelcore.modules.JoinLeaveModule;
 import de.t14d3.rapunzelcore.modules.joinleave.PaperJoinLeaveModuleImpl;
 import de.t14d3.rapunzelcore.configsync.CoreConfigSync;
@@ -30,24 +37,35 @@ import de.t14d3.rapunzelcore.util.ReflectionsUtil;
 import de.t14d3.rapunzellib.platform.paper.network.PaperPluginMessenger;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIPaperConfig;
- import org.bukkit.Bukkit;
- import org.bukkit.permissions.Permission;
- import org.bukkit.permissions.PermissionDefault;
- import org.bukkit.plugin.PluginManager;
- import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.Bukkit;
+import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionDefault;
+import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.java.JavaPlugin;
 
-
+import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import de.t14d3.rapunzelcore.modules.entitytransfer.EntityTransferModule;
+import de.t14d3.rapunzelcore.modules.entitytransfer.PaperEntityTransferModuleImpl;
+import de.t14d3.rapunzelcore.modules.portals.PortalModule;
+import de.t14d3.rapunzelcore.modules.pets.PetsModule;
+import de.t14d3.rapunzelcore.modules.portals.PaperPortalModuleImpl;
+import de.t14d3.rapunzelcore.modules.pets.PaperPetsModuleImpl;
 
 public final class RapunzelPaperCore extends JavaPlugin implements RapunzelCore {
     private MessageHandler messages;
     private static RapunzelPaperCore instance;
+
+    public static RapunzelPaperCore getInstance() {
+        return instance;
+    }
     private SpoolDatabase coreDatabase;
     private YamlConfig config;
     private Messenger messenger;
     private AutoCloseable networking;
+    private ModuleManager moduleManager;
 
     public static final boolean DEBUG = false;
 
@@ -64,23 +82,38 @@ public final class RapunzelPaperCore extends JavaPlugin implements RapunzelCore 
             Rapunzel.context().dataDirectory().resolve("config.yml"),
             "config.yml"
         );
-        Rapunzel.context().services().register(RapunzelCore.class, this);       
 
-        String jdbc = config.getString("database.jdbc", "jdbc:sqlite:plugins/RapunzelCore/rapunzelcore.db");
-        getLogger().info("Using JDBC: " + jdbc);
-        coreDatabase = SpoolDatabase.open(jdbc, getSLF4JLogger(), PlayerEntity.class, Home.class, Warp.class, Channel.class, TeleportRequest.class, PendingTeleport.class, NetworkOutboxMessage.class);
-        CoreDatabase.init(coreDatabase);
+        // Validate configuration
+        ConfigValidator validator = new ConfigValidator(getSLF4JLogger());
+        if (!validator.validateConfig(config)) {
+            getLogger().warning("Configuration validation failed. Please check your config.yml file.");
+        } else {
+            getLogger().info("Configuration validation passed.");
+        }
 
-        Rapunzel.context().services().register(SpoolDatabase.class, coreDatabase);
-        setupNetworking();
-        CoreDatabase.startEntitySync(messenger);
+        Rapunzel.context().services().register(RapunzelCore.class, this);
 
-        CoreConfigSync.bootstrap(this);
+        // Initialize module manager
+        this.moduleManager = new ModuleManager(this);
 
-        // Load modules from config
-        loadModules();
+        Rapunzel.context().scheduler().runLater(Duration.ofSeconds(3), () -> {
 
-        new CoreCommand();
+            String jdbc = config.getString("database.jdbc", "jdbc:sqlite:plugins/RapunzelCore/rapunzelcore.db");
+            getLogger().info("Using JDBC: " + jdbc);
+            coreDatabase = SpoolDatabase.open(jdbc, getSLF4JLogger(), PlayerEntity.class, Home.class, Warp.class, Channel.class, TeleportRequest.class, PendingTeleport.class, InventoryProfile.class, InventoryLock.class, NetworkOutboxMessage.class, PlayerMute.class, PlayerWarning.class);
+            CoreDatabase.init(coreDatabase);
+
+            Rapunzel.context().services().register(SpoolDatabase.class, coreDatabase);
+            setupNetworking();
+            CoreDatabase.startEntitySync(messenger);
+
+            CoreConfigSync.bootstrap(this);
+
+            // Load modules from config
+            loadModules();
+
+            new CoreCommand();
+        });
     }
 
     @Override
@@ -97,6 +130,12 @@ public final class RapunzelPaperCore extends JavaPlugin implements RapunzelCore 
     @Override
     public void onDisable() {
         CoreConfigSync.shutdown();
+
+        // Disable all modules
+        if (moduleManager != null) {
+            moduleManager.disableAll();
+        }
+
         AutoCloseable closeable = networking;
         networking = null;
         if (closeable != null) {
@@ -131,13 +170,33 @@ public final class RapunzelPaperCore extends JavaPlugin implements RapunzelCore 
         }
 
         @Override
-        public JoinLeaveModule.JoinLeaveModuleImpl createJoinLeaveModuleImpl(RapunzelCore core, boolean networkEnabled, java.nio.file.Path configPath) {
+        public JoinLeaveModule.JoinLeaveModuleImpl createJoinLeaveModuleImpl(RapunzelCore core, YamlConfig config, java.nio.file.Path configPath) {
+            boolean networkEnabled = config.getBoolean("network.enabled", false);
             return new PaperJoinLeaveModuleImpl((RapunzelPaperCore) core, networkEnabled, configPath);
         }
 
+        @Override
+        public ModerationModule.ModerationModuleImpl createModerationModuleImpl(RapunzelCore core, YamlConfig config) {
+            return new PaperModerationModuleImpl(core, config);
+        }
 
         @Override
-        public void registerPermissions(Map<String, String> permissions) {      
+        public EntityTransferModule.EntityTransferModuleImpl createEntityTransferModuleImpl(RapunzelCore core) {
+            return new PaperEntityTransferModuleImpl();
+        }
+
+        @Override
+        public PortalModule.PortalModuleImpl createPortalModuleImpl(RapunzelCore core) {
+            return new PaperPortalModuleImpl();
+        }
+
+        @Override
+        public PetsModule.PetsModuleImpl createPetsModuleImpl(RapunzelCore core) {
+            return new PaperPetsModuleImpl();
+        }
+
+        @Override
+        public void registerPermissions(Map<String, String> permissions) {
             if (permissions == null || permissions.isEmpty()) return;
 
             PluginManager pluginManager = Bukkit.getPluginManager();
@@ -169,7 +228,6 @@ public final class RapunzelPaperCore extends JavaPlugin implements RapunzelCore 
                 default -> PermissionDefault.OP;
             };
         }
-
     }
 
 
@@ -190,8 +248,8 @@ public final class RapunzelPaperCore extends JavaPlugin implements RapunzelCore 
 
 
     @Override
-    public List<Module> getModules() {
-        return ModuleManager.getModules();
+    public List<ModuleDescriptor> getModules() {
+        return moduleManager.getModules();
     }
 
     @Override
@@ -199,13 +257,24 @@ public final class RapunzelPaperCore extends JavaPlugin implements RapunzelCore 
         return Environment.PAPER;
     }
 
+    public Object getResourceProvider() {
+        return this;
+    }
+/**
+     * Gets the module manager for this core instance.
+     * @return The module manager
+     */
+    public ModuleManager getModuleManager() {
+        return moduleManager;
+    }
 
     public void reloadPlugin() {
         // Disable all modules
-        for (Module module : ModuleManager.getModules()) {
-            getLogger().info("Disabling module: " + module.getName());
-            module.disable(this, getEnvironment());
-            ModuleManager.disable(module.getName(), getEnvironment());
+        for (ModuleDescriptor descriptor : moduleManager.getModules()) {
+            if (descriptor.isEnabled()) {
+                getLogger().info("Disabling module: " + descriptor.name());
+                moduleManager.disable(descriptor.name());
+            }
         }
 
         // Reload plugin configuration
@@ -223,12 +292,22 @@ public final class RapunzelPaperCore extends JavaPlugin implements RapunzelCore 
     private void loadModules() {
         ReflectionsUtil.getSubTypes(Module.class).forEach(clazz -> {
             try {
-                Module module = clazz.getDeclaredConstructor().newInstance();
-                String name = module.getName();
-                ModuleManager.register(module);
-                if (getConfiguration().getBoolean("modules." + name, false)) {
-                    module.enable(this, getEnvironment());
+                ModuleDescriptor descriptor = moduleManager.register(clazz);
+                if (descriptor == null) {
+                    return;
+                }
+                String name = descriptor.name();
+                if (!getConfiguration().getBoolean("modules." + name, false)) {
+                    return;
+                }
+                if (!descriptor.supports(getEnvironment())) {
+                    getLogger().info("Skipping module " + name + " (not compatible with " + getEnvironment() + ")");
+                    return;
+                }
+                if (moduleManager.enable(name)) {
                     getLogger().info("Loaded module: " + name);
+                } else {
+                    getLogger().warning("Failed to load module " + name);
                 }
             } catch (Exception e) {
                 getLogger().warning("Failed to load module " + clazz.getName() + ": " + e.getMessage());
@@ -251,7 +330,6 @@ public final class RapunzelPaperCore extends JavaPlugin implements RapunzelCore 
             "config.yml"
         );
     }
-
 
 
     public static String getServerName() {
@@ -310,11 +388,12 @@ public final class RapunzelPaperCore extends JavaPlugin implements RapunzelCore 
             MessengerTransportBootstrap.bootstrap(config, Rapunzel.context().platformId(), logger);
 
         AutoCloseable closeable = result.closeable();
-        messenger = result.messenger();
+        Messenger transportMessenger = result.messenger();
+        Messenger activeMessenger = transportMessenger;
 
         if (result.usingRedis()) {
             NetworkInfoClient info = new NetworkInfoClient(
-                messenger,
+                transportMessenger,
                 Rapunzel.context().scheduler(),
                 logger
             );
@@ -326,7 +405,7 @@ public final class RapunzelPaperCore extends JavaPlugin implements RapunzelCore 
             if (queueConfig.enabled()) {
                 DbQueuedMessenger queued = new DbQueuedMessenger(
                     coreDatabase,
-                    messenger,
+                    transportMessenger,
                     Rapunzel.context().scheduler(),
                     logger,
                     NetworkQueueConfig.defaultOwnerId(),
@@ -337,15 +416,17 @@ public final class RapunzelPaperCore extends JavaPlugin implements RapunzelCore 
                 );
 
                 Rapunzel.context().services().register(DbQueuedMessenger.class, queued);
+                activeMessenger = queued;
                 closeable = Closeables.chain(closeable, queued);
             }
         }
-        PaperPluginMessenger pluginMessenger = new PaperPluginMessenger(this);
-        messenger = pluginMessenger;
-        Rapunzel.context().services().register(PaperPluginMessenger.class, pluginMessenger);
-        closeable = Closeables.chain(closeable, pluginMessenger);
 
+        if (transportMessenger instanceof PaperPluginMessenger ppm) {
+            Rapunzel.context().services().register(PaperPluginMessenger.class, ppm);
+        }
 
+        messenger = activeMessenger;
+        Rapunzel.context().services().register(Messenger.class, activeMessenger);
         networking = closeable;
     }
 }

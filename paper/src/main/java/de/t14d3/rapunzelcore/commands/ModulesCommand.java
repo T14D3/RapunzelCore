@@ -3,7 +3,8 @@ package de.t14d3.rapunzelcore.commands;
 import com.mojang.brigadier.Command;
 import de.t14d3.rapunzelcore.ModuleManager;
 import de.t14d3.rapunzelcore.RapunzelCore;
-import de.t14d3.rapunzelcore.Module;
+import de.t14d3.rapunzelcore.RapunzelPaperCore;
+import de.t14d3.rapunzelcore.ModuleDescriptor;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.StringArgument;
 import net.kyori.adventure.text.Component;
@@ -33,19 +34,26 @@ public class ModulesCommand {
                             if (action == null) {
                                 return builder.buildFuture();
                             }
+                            
+                            RapunzelPaperCore core = RapunzelPaperCore.getInstance();
+                            if (core == null) {
+                                return builder.buildFuture();
+                            }
+                            ModuleManager moduleManager = core.getModuleManager();
+                            
                             return switch (action.toLowerCase()) {
                                 case "enable" -> {
-                                    ModuleManager.getModules().forEach(module -> {
+                                    moduleManager.getModules().forEach(module -> {
                                         if (!module.isEnabled()) {
-                                            builder.suggest(module.getName());
+                                            builder.suggest(module.name());
                                         }
                                     });
                                     yield builder.buildFuture();
                                 }
                                 case "disable", "reload" -> {
-                                    ModuleManager.getModules().forEach(module -> {
+                                    moduleManager.getModules().forEach(module -> {
                                         if (module.isEnabled()) {
-                                            builder.suggest(module.getName());
+                                            builder.suggest(module.name());
                                         }
                                     });
                                     yield builder.buildFuture();
@@ -62,17 +70,24 @@ public class ModulesCommand {
                         return Command.SINGLE_SUCCESS;
                     }
 
+                    RapunzelPaperCore core = RapunzelPaperCore.getInstance();
+                    if (core == null) {
+                        executor.sendMessage(Component.text("Core not initialized."));
+                        return Command.SINGLE_SUCCESS;
+                    }
+                    ModuleManager moduleManager = core.getModuleManager();
+
                     switch (action.toLowerCase()) {
                         case "list" -> {
                             Component message = Component.empty();
-                            for (Module module : ModuleManager.getModules()) {
-                                message = message.append(Component.text("\n - " + module.getName()).color(module.isEnabled() ? NamedTextColor.GREEN : NamedTextColor.RED));
+                            for (ModuleDescriptor module : moduleManager.getModules()) {
+                                message = message.append(Component.text("\n - " + module.name()).color(module.isEnabled() ? NamedTextColor.GREEN : NamedTextColor.RED));
                             }
                             executor.sendMessage(message);
                             return Command.SINGLE_SUCCESS;
                         }
                         case "disable" -> {
-                            if (ModuleManager.disable(moduleName)) {
+                            if (moduleManager.disable(moduleName)) {
                                 executor.sendMessage(Component.text("Module disabled."));
                             } else {
                                 executor.sendMessage(Component.text("Module not found."));
@@ -80,7 +95,7 @@ public class ModulesCommand {
                             return Command.SINGLE_SUCCESS;
                         }
                         case "reload" -> {
-                            if (ModuleManager.reload(moduleName)) {
+                            if (moduleManager.reload(moduleName)) {
                                 executor.sendMessage(Component.text("Module reloaded."));
                             } else {
                                 executor.sendMessage(Component.text("Module not found."));
@@ -88,7 +103,7 @@ public class ModulesCommand {
                             return Command.SINGLE_SUCCESS;
                         }
                         case "enable" -> {
-                            if (ModuleManager.enable(moduleName)) {
+                            if (moduleManager.enable(moduleName)) {
                                 executor.sendMessage(Component.text("Module enabled."));
                             } else {
                                 executor.sendMessage(Component.text("Module not found."));

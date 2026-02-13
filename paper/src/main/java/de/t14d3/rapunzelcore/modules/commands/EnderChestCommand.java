@@ -1,6 +1,7 @@
 package de.t14d3.rapunzelcore.modules.commands;
 
 import de.t14d3.rapunzelcore.RapunzelCore;
+import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
 import de.t14d3.rapunzelcore.modules.commands.enderchest.EnderChestListener;
 import dev.jorel.commandapi.CommandAPI;
@@ -62,7 +63,8 @@ public class EnderChestCommand implements Command {
                 })
                 .register((JavaPlugin) RapunzelCore.getInstance());
         listener = new EnderChestListener();
-        ((RapunzelPaperCore) RapunzelCore.getInstance()).getServer().getPluginManager().registerEvents(listener, (Plugin) RapunzelCore.getInstance());
+        RapunzelPaperCore core = (RapunzelPaperCore) RapunzelCore.getInstance();
+        core.getServer().getPluginManager().registerEvents(listener, (Plugin) RapunzelCore.getInstance());
     }
 
     @Override

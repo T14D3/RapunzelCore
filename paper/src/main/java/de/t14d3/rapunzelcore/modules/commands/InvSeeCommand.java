@@ -1,6 +1,7 @@
 package de.t14d3.rapunzelcore.modules.commands;
 
 import de.t14d3.rapunzelcore.RapunzelCore;
+import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
 import de.t14d3.rapunzelcore.modules.commands.invsee.InvSeeListener;
 import de.t14d3.rapunzelcore.modules.commands.invsee.PlayerInventoryMirror;
@@ -11,7 +12,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-
 
 public class InvSeeCommand implements Command {
     private InvSeeListener listener;
@@ -65,7 +65,8 @@ public class InvSeeCommand implements Command {
                 })
                 .register((JavaPlugin) RapunzelCore.getInstance());
         listener = new InvSeeListener();
-        ((RapunzelPaperCore) RapunzelCore.getInstance()).getServer().getPluginManager().registerEvents(listener, (Plugin) RapunzelCore.getInstance());
+        RapunzelPaperCore core = (RapunzelPaperCore) RapunzelCore.getInstance();
+        core.getServer().getPluginManager().registerEvents(listener, (Plugin) RapunzelCore.getInstance());
     }
 
     @Override

@@ -55,13 +55,13 @@ commands:
     error:
       invalid: "<red>Invalid player!"
     toggle: "<green>Vanish mode <gold><arg1>"
-    fakemessage:
-      join:
-        broadcast: "<gray>[<green>+<gray>] <gray><arg1>"
-        see: "<gold><arg1> <gray> hat den Vanish Modus deaktiviert."
-      leave:
-        broadcast: "<gray>[<red>-<gray>] <gray><arg1>"
-        see: "<gold><arg1> <gray> hat den Vanish Modus aktiviert."
+  fakemessage:
+    join:
+      broadcast: "<gray>[<green>+<gray>] <gray><arg1>"
+      see: "<gold><arg1> <gray> hat den Vanish Modus deaktiviert."
+    leave:
+      broadcast: "<gray>[<red>-<gray>] <gray><arg1>"
+      see: "<gold><arg1> <gray> hat den Vanish Modus aktiviert."
     list: "<gray>Diese Spieler sind aktuell im Vanish: <gold><arg1>"
   uinfo:
     error:
@@ -96,10 +96,10 @@ commands:
     disabled: "<red>Config sync is disabled on this server."
     status: "<gray>Config sync role: <gold><arg1>"
     broadcasted: "<green>Broadcasted config sync update."
-    sync:
-      started: "<gray>Requesting config sync..."
-      success: "<green>Config sync applied (<gold><arg1><green> written, <gold><arg2><green> deleted)."
-      error: "<red>Config sync failed: <arg1>"
+  sync:
+    started: "<gray>Requesting config sync..."
+    success: "<green>Config sync applied (<gold><arg1><green> written, <gold><arg2><green> deleted)."
+    error: "<red>Config sync failed: <arg1>"
   god:
     success: "<green>God mode <gold><arg1> for <gold><arg2>"
   heal:
@@ -109,6 +109,10 @@ commands:
     main: "<green>Main channel set to: <gold><arg1>"
     joined: "<green>Joined channel: <gold><arg1>"
     left: "<green>Left channel: <gold><arg1>"
+    create:
+      success: "<green>Channel '<gold><arg1><green>' created."
+    addmember:
+      success: "<green>You have been added to channel '<gold><arg1><green>'."
     error:
       notfound: "<red>Channel '<gold><arg1><red>' not found."
       nopermission: "<red>You do not have permission to use channel '<gold><arg1><red>'."
@@ -116,103 +120,245 @@ commands:
       leave: "<red>Could not leave channel '<gold><arg1><red>'."
       main: "<red>Could not set main channel to '<gold><arg1><red>'."
       send: "<red>Could not send message to channel '<gold><arg1><red>'."
-teleports:
-  home:
-    error:
-      no_home: "<red>You have no home set called '<gold><arg1><red>'."
-    success: "<green>Teleported to home '<gold><arg1><green>'."
-  sethome:
-    success: "<green>Home '<gold><arg1><green>' set."
-    error:
-      limit_reached: "<red>You have reached the maximum number of homes (<gold><arg1><red>)."
-    limit_reached: "<green>You have reached the maximum number of homes."
-    remaining: "<gray>You have <gold><arg1> <gray>homes remaining."
-    updated: "<green>Home '<gold><arg1><green>' updated."
-  delhome:
-    error:
-      no_home: "<red>You have no home set called '<gold><arg1><red>'."
-    success: "<green>Home '<gold><arg1><green>' deleted."
-  homes:
-    error:
-      none: "<red>You have no homes set."
-    header: "<green>Your homes:"
-    entry: "<gray>- <gold><arg1> <gray>(<gold><arg2>, <arg3>, <arg4><gray>)"
-  warp:
-    error:
-      invalid: "<red>Warp '<gold><arg1><red>' does not exist."
-      no_permission: "<red>You do not have permission to use warp '<gold><arg1><red>'."
-    success: "<green>Teleported to warp '<gold><arg1><green>'."
-  setwarp:
-    success: "<green>Warp '<gold><arg1><green>' set."
-  delwarp:
-    error:
-      invalid: "<red>Warp '<gold><arg1><red>' does not exist."
-    success: "<green>Warp '<gold><arg1><green>' deleted."
-  warps:
-    error:
-      none: "<red>No warps available."
-    header: "<green>Available warps:"
-    entry: "<gray>- <gold><arg1> <gray>(<gold><arg2>, <arg3>, <arg4><gray>)"
-    permission: "<gray> (Requires: <gold><arg1><gray>)"
-  spawn:
-    success: "<green>Teleported to spawn."
-  setspawn:
-    success: "<green>Spawn set."
-  tpaccept:
-    error:
-      multiple_requests: "<red>You have multiple teleport requests. Please specify a player name."
-      no_request_from: "<red>You have no teleport request from <gold><arg1><red>."
-      no_request: "<red>You have no teleport request."
-    list_entry: "<gray>- <gold><arg1>"
-    accepted: "<green>Teleport request from <gold><arg1> <green>accepted."
-    accepted_by: "<green>Teleport request from <gold><arg1> <green>accepted by <gold><arg2>"
-  tpdeny:
-    error:
-      multiple_requests: "<red>You have multiple teleport requests. Please specify a player name."
-      no_request_from: "<red>You have no teleport request from <gold><arg1><red>."
-      no_request: "<red>You have no teleport request from <gold><arg1><red>."
-    list_entry: "<gray>- <gold><arg1>"
-    denied: "<red>Teleport request denied."
-    denied_request: "<red>Denied teleport request from <gold><arg1><red>."
-  tpo:
-    success: "<green>Teleported to <gold><arg1>"
-  tpohere:
-    success: "<green>Teleported <gold><arg1> <green>to your location."
-  tpa:
-    error:
-      self: "<red>You cannot send a teleport request to yourself!"
-      toggled: "<red><gold><arg1> <red>has teleport requests disabled."
-    expired: "<red>Your teleport request to <gold><arg1> <red>has expired."
-    received: "<gold><arg1> <green>wants to teleport to you. Type /tpaccept to accept."
-    sent: "<green>Teleport request sent to <gold><arg1><green>."
-  tpahere:
-    received: "<gold><arg1> <green>wants you to teleport to them. Type /tpaccept to accept."
-    sent: "<green>Teleport request sent to <gold><arg1><green>."
-  tphere:
-    success: "<green>Teleported <gold><arg1> <green>to your location."
-    teleported_by: "<green>You were teleported by <gold><arg1><green>."
-  tptoggle:
-    toggled: "<green>Teleport requests <gold><arg1>"
-script:
-  permission:
-    denied: "<red>You don't have permission to use all blocks in this script.</red>"
-alias:
-  permission:
-    denied: "<red>You don't have permission to use this alias.</red>"
+      invalid: "<red>You provided invalid arguments."
+      nametoolong: "<red>The name of the channel must be less than 16 characters."
+      alreadyexists: "<red>A channel with that name already exists."
+      notallowed: "<red>You are not allowed to add members to this channel."
+      alreadymember: "<red>You are already a member of this channel."
+  teleports:
+    home:
+      error:
+        no_home: "<red>You have no home set called '<gold><arg1><red>'."
+      success: "<green>Teleported to home '<gold><arg1><green>'."
+    sethome:
+      success: "<green>Home '<gold><arg1><green>' set."
+      error:
+        limit_reached: "<red>You have reached the maximum number of homes (<gold><arg1><red>)."
+      limit_reached: "<green>You have reached the maximum number of homes."
+      remaining: "<gray>You have <gold><arg1> <gray>homes remaining."
+      updated: "<green>Home '<gold><arg1><green>' updated."
+    delhome:
+      error:
+        no_home: "<red>You have no home set called '<gold><arg1><red>'."
+      success: "<green>Home '<gold><arg1><green>' deleted."
+    homes:
+      error:
+        none: "<red>You have no homes set."
+      header: "<green>Your homes:"
+      entry: "<gray>- <gold><arg1> <gray>(<gold><arg2>, <arg3>, <arg4><gray>)"
+    warp:
+      error:
+        invalid: "<red>Warp '<gold><arg1><red>' does not exist."
+        no_permission: "<red>You do not have permission to use warp '<gold><arg1><red>'."
+      success: "<green>Teleported to warp '<gold><arg1><green>'."
+    setwarp:
+      success: "<green>Warp '<gold><arg1><green>' set."
+    delwarp:
+      error:
+        invalid: "<red>Warp '<gold><arg1><red>' does not exist."
+      success: "<green>Warp '<gold><arg1><green>' deleted."
+    warps:
+      error:
+        none: "<red>No warps available."
+      header: "<green>Available warps:"
+      entry: "<gray>- <gold><arg1> <gray>(<gold><arg2>, <arg3>, <arg4><gray>)"
+      permission: "<gray> (Requires: <gold><arg1><gray>)"
+    spawn:
+      success: "<green>Teleported to spawn."
+    setspawn:
+      success: "<green>Spawn set."
+    tpaccept:
+      error:
+        multiple_requests: "<red>You have multiple teleport requests. Please specify a player name."
+        no_request_from: "<red>You have no teleport request from <gold><arg1><red>."
+        no_request: "<red>You have no teleport request."
+      list_entry: "<gray>- <gold><arg1>"
+      accepted: "<green>Teleport request from <gold><arg1> <green>accepted."
+      accepted_by: "<green>Teleport request from <gold><arg1> <green>accepted by <gold><arg2>"
+    tpdeny:
+      error:
+        multiple_requests: "<red>You have multiple teleport requests. Please specify a player name."
+        no_request_from: "<red>You have no teleport request from <gold><arg1><red>."
+        no_request: "<red>You have no teleport request from <gold><arg1><red>."
+      list_entry: "<gray>- <gold><arg1>"
+      denied: "<red>Teleport request denied."
+      denied_request: "<red>Denied teleport request from <gold><arg1><red>."
+    tpo:
+      success: "<green>Teleported to <gold><arg1>"
+    tpohere:
+      success: "<green>Teleported <gold><arg1> <green>to your location."
+    tpa:
+      error:
+        self: "<red>You cannot send a teleport request to yourself!"
+        toggled: "<red><gold><arg1> <red>has teleport requests disabled."
+        expired: "<red>Your teleport request to <gold><arg1> <red>has expired."
+      received: "<gold><arg1> <green>wants to teleport to you. Type /tpaccept to accept."
+      sent: "<green>Teleport request sent to <gold><arg1><green>."
+    tpahere:
+      received: "<gold><arg1> <green>wants you to teleport to them. Type /tpaccept to accept."
+      sent: "<green>Teleport request sent to <gold><arg1><green>."
+    tphere:
+      success: "<green>Teleported <gold><arg1> <green>to your location."
+      teleported_by: "<green>You were teleported by <gold><arg1><green>."
+    tptoggle:
+      toggled: "<green>Teleport requests <gold><arg1>"
+  script:
+    permission:
+      denied: "<red>You don't have permission to use all blocks in this script.</red>"
+  alias:
+    permission:
+      denied: "<red>You don't have permission to use this alias.</red>"
     cleared: "Permission cleared."
     set: "Permission set to: <arg1>"
-  line:
-    updated: "Line updated."
-    added: "Line added."
-    removed: "Line removed."
-  removed: "<red>Alias removed: <arg1></red>"
-  list:
-    empty: "No aliases defined."
-    header: "Aliases:"
-  editor:
-    header: "<gold>Editing alias: <arg1></gold>"
-  not:
-    found: "Alias not found."
+    line:
+      updated: "Line updated."
+      added: "Line added."
+      removed: "Line removed."
+    removed: "<red>Alias removed: <arg1></red>"
+    list:
+      empty: "No aliases defined."
+      header: "Aliases:"
+    editor:
+      header: "<gold>Editing alias: <arg1></gold>"
+    not:
+      found: "Alias not found."
+  
+  # ============================================
+  # MODERATION COMMANDS
+  # ============================================
+  ban:
+    success:
+      permanent: "<green>Permanently banned <gold><arg1> <green>for: <white><arg2>"
+      temporary: "<green>Temporarily banned <gold><arg1> <green>for <gold><arg2> <green>for: <white><arg3>"
+    broadcast:
+      permanent: "<red><bold>[BAN]</bold> <gold><arg1> <red>was permanently banned by <gold><arg2> <red>for: <white><arg3>"
+      temporary: "<red><bold>[BAN]</bold> <gold><arg1> <red>was temporarily banned by <gold><arg2> <red>for <gold><arg3> <red>for: <white><arg4>"
+    error:
+      bypass: "<red>You cannot ban <gold><arg1><red> - they have moderation bypass permission."
+      no_permanent: "<red>You do not have permission to issue permanent bans."
+  
+  unban:
+    success: "<green>Unbanned <gold><arg1>"
+    broadcast: "<green><bold>[UNBAN]</bold> <gold><arg1> <green>was unbanned by <gold><arg2>"
+    error:
+      not_banned: "<red><gold><arg1> <red>is not banned."
+  
+  kick:
+    success: "<green>Kicked <gold><arg1> <green>for: <white><arg2>"
+    broadcast: "<yellow><bold>[KICK]</bold> <gold><arg1> <yellow>was kicked by <gold><arg2> <yellow>for: <white><arg3>"
+    message: "<red>You were kicked: <white><arg1> <gray>(by <arg2>)"
+    error:
+      bypass: "<red>You cannot kick <gold><arg1><red> - they have moderation bypass permission."
+  
+  mute:
+    success:
+      permanent: "<green>Permanently muted <gold><arg1> <green>for: <white><arg2>"
+      temporary: "<green>Temporarily muted <gold><arg1> <green>for <gold><arg2> <green>for: <white><arg3>"
+    broadcast:
+      permanent: "<red><bold>[MUTE]</bold> <gold><arg1> <red>was permanently muted by <gold><arg2> <red>for: <white><arg3>"
+      temporary: "<red><bold>[MUTE]</bold> <gold><arg1> <red>was temporarily muted by <gold><arg2> <red>for <gold><arg3> <red>for: <white><arg4>"
+    notify:
+      permanent: "<red>You have been permanently muted by <gold><arg1> <red>for: <white><arg2>"
+      temporary: "<red>You have been temporarily muted by <gold><arg1> <red>for <gold><arg2> <red>for: <white><arg3>"
+    error:
+      already_muted: "<red><gold><arg1> <red>is already muted."
+      no_permanent: "<red>You do not have permission to issue permanent mutes."
+  
+  unmute:
+    success: "<green>Unmuted <gold><arg1>"
+    broadcast: "<green><bold>[UNMUTE]</bold> <gold><arg1> <green>was unmuted by <gold><arg2>"
+    notify: "<green>You have been unmuted by <gold><arg1>"
+    error:
+      not_muted: "<red><gold><arg1> <red>is not muted."
+  
+  jail:
+    success:
+      permanent: "<green>Jailed <gold><arg1> <green>for: <white><arg2>"
+      temporary: "<green>Jailed <gold><arg1> <green>for <gold><arg2> <green>for: <white><arg3>"
+    broadcast:
+      permanent: "<red><bold>[JAIL]</bold> <gold><arg1> <red>was jailed by <gold><arg2> <red>for: <white><arg3>"
+      temporary: "<red><bold>[JAIL]</bold> <gold><arg1> <red>was jailed by <gold><arg2> <red>for <gold><arg3> <red>for: <white><arg4>"
+    notify:
+      permanent: "<red>You have been jailed by <gold><arg1> <red>for: <white><arg2>"
+      temporary: "<red>You have been jailed by <gold><arg1> <red>for <gold><arg2> <red>for: <white><arg3>"
+    error:
+      bypass: "<red>You cannot jail <gold><arg1><red> - they have moderation bypass permission."
+      no_location: "<red>Jail location is not set. Use /setjail to set it."
+      already_jailed: "<red><gold><arg1> <red>is already jailed."
+      cannot_leave: "<red>You cannot leave the jail area!"
+      cannot_teleport: "<red>You cannot teleport while jailed!"
+    expired: "<green>Your jail time has expired. You have been released."
+  
+  unjail:
+    success: "<green>Released <gold><arg1> <green>from jail"
+    broadcast: "<green><bold>[UNJAIL]</bold> <gold><arg1> <green>was released from jail by <gold><arg2>"
+    notify: "<green>You have been released from jail by <gold><arg1>"
+    error:
+      not_jailed: "<red><gold><arg1> <red>is not jailed."
+  
+  setjail:
+    success: "<green>Jail location set to <gold><arg1> <green>at <gold><arg2>, <arg3>, <arg4>"
+  
+  warn:
+    success: "<green>Warned <gold><arg1> <green>for: <white><arg2> <gray>(Warning #<arg3>)"
+    broadcast: "<yellow><bold>[WARN]</bold> <gold><arg1> <yellow>was warned by <gold><arg2> <yellow>for: <white><arg3> <gray>(#<arg4>)"
+    received: "<red><bold>WARNING:</bold> <white><arg1> <gray>(by <arg2>)"
+  
+  clearwarnings:
+    success: "<green>Cleared all warnings for <gold><arg1>"
+    broadcast: "<green><bold>[CLEAR WARNINGS]</bold> All warnings for <gold><arg1> <green>were cleared by <gold><arg2>"
+  
+  warnings:
+    header: "<gold>=== Warnings for <arg1> (<arg2> total) ==="
+    entry: "<gray>#<gold><arg1> <gray>- <white><arg3> <gray>by <gold><arg2> <dark_gray>(<arg4>)"
+    none: "<green><arg1> has no active warnings."
+  
+  # ============================================
+  # UTILITY COMMANDS
+  # ============================================
+  playertime:
+    set:
+      self: "<green>Set your personal time to <gold><arg1>"
+      other: "<green>Set personal time of <gold><arg1> <green>to <gold><arg2>"
+      target: "<gold><arg1> <green>set your personal time to <gold><arg2>"
+    reset:
+      self: "<green>Reset your personal time to server time"
+      other: "<green>Reset personal time of <gold><arg1> <green>to server time"
+      target: "<gold><arg1> <green>reset your personal time to server time"
+  
+  playerweather:
+    set:
+      self: "<green>Set your personal weather to <gold><arg1>"
+      other: "<green>Set personal weather of <gold><arg1> <green>to <gold><arg2>"
+      target: "<gold><arg1> <green>set your personal weather to <gold><arg2>"
+    reset:
+      self: "<green>Reset your personal weather to server weather"
+      other: "<green>Reset personal weather of <gold><arg1> <green>to server weather"
+      target: "<gold><arg1> <green>reset your personal weather to server weather"
+  
+  hat:
+    success:
+      self: "<green>You put <gold><arg1> <green>on your head!"
+      other: "<green>You put <gold><arg2> <green>on <gold><arg1><green>'s head!"
+      target: "<gold><arg1> <green>put <gold><arg2> <green>on your head!"
+    error:
+      no_item: "<red>You must hold an item in your hand!"
+  
+  skull:
+    success:
+      self: "<green>You received <gold><arg1><green>'s skull!"
+      other: "<green>You gave <gold><arg1><green>'s skull to <gold><arg2>"
+      target: "<gold><arg1> <green>gave you <gold><arg2><green>'s skull!"
+  
+  trash:
+    title: "<red>Trash - Items will be deleted!"
+    opened: "<gray>Trash inventory opened. Items placed here will be deleted when closed."
+    deleted: "<red><arg1> items were deleted from trash."
+  
+  recipe:
+    error:
+      no_recipe: "<red>No recipe found for <gold><arg1>"
+
 general:
   toggle:
     "on": "<green>Enabled"
@@ -221,5 +367,6 @@ general:
     player:
       invalid: "<red><arg1> is not a valid player!"
       offline: "<red>player is offline!"
+    database: "<red>A database error occurred. Please try again later."
   component:
     item: "<icon> <gold>[<white><name> x<amount><gold>]"

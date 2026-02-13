@@ -9,6 +9,8 @@ dependencies {
     implementation(libs.rapunzellib.api)
     implementation(libs.rapunzellib.network)
     implementation(libs.rapunzellib.database.spool)
+    implementation(libs.rapunzellib.nbt)
+    implementation(libs.rapunzellib.events)
 
     // JSON serialization for cross-server communication
     implementation(libs.gson)
@@ -16,9 +18,9 @@ dependencies {
     // Module discovery (used by shared ReflectionsUtil)
     implementation(libs.reflections)
 
-    // JDBC driver for MySQL (used when database.jdbc is a mysql:// URL)        
+    // JDBC driver for MySQL (used when database.jdbc is a mysql:// URL)
     implementation(libs.mysql.driver)
-    
+
     // Logging
     implementation(libs.slf4j.api)
 

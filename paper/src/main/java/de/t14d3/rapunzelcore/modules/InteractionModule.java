@@ -5,28 +5,37 @@ import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.RapunzelCore;
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
 import de.t14d3.rapunzellib.config.YamlConfig;
+import de.t14d3.rapunzellib.config.SnakeYamlConfig;
 import org.bukkit.Location;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class InteractionModule implements Module {
+public class InteractionModule implements Module, Listener {
+    private RapunzelCore core;
     private boolean enabled = false;
+
     private RapunzelPaperCore plugin;
     private final Map<String, String> interactions = new HashMap<>();
     private YamlConfig config;
 
-    @Override
     public Environment getEnvironment() {
         return Environment.PAPER;
     }
 
     @Override
-    public void enable(RapunzelCore core, Environment environment) {
+    public void disable() {
+        this.enabled = false;
+    }
+
+
+    public void enable(RapunzelCore core) {
         if (enabled) return;
         this.plugin = (RapunzelPaperCore) core;
         enabled = true;
@@ -36,24 +45,21 @@ public class InteractionModule implements Module {
         loadInteractions();
 
         // Register listener
-        this.plugin.getServer().getPluginManager().registerEvents(new InteractionListener(this), this.plugin);
+        plugin.getServer().getPluginManager().registerEvents(new InteractionListener(this), plugin);
     }
 
-    @Override
     public void disable(RapunzelCore core, Environment environment) {
         if (!enabled) return;
         enabled = false;
         saveConfig(config);
     }
 
-    @Override
-    public String getName() {
-        return "interaction";
-    }
-
-    @Override
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public String getName() {
+        return "interaction";
     }
 
     public void setInteraction(Location location, String command) {

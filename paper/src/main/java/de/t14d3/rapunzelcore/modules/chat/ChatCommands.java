@@ -1,6 +1,7 @@
 package de.t14d3.rapunzelcore.modules.chat;
 
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
+import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.database.CoreDatabase;
 import de.t14d3.rapunzelcore.database.entities.Channel;
 import de.t14d3.rapunzelcore.database.entities.PlayerEntity;
@@ -16,12 +17,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public class ChatCommands {
-    private final RapunzelPaperCore plugin;
+    private final RapunzelPaperCore core;
     private final ChannelManager channelManager;
     private final PaperChannelBroadcaster broadcaster;
 
-    public ChatCommands(RapunzelPaperCore plugin, ChannelManager channelManager, PaperChannelBroadcaster broadcaster) {
-        this.plugin = plugin;
+    public ChatCommands(RapunzelPaperCore core, ChannelManager channelManager, PaperChannelBroadcaster broadcaster) {
+        this.core = core;
         this.channelManager = channelManager;
         this.broadcaster = broadcaster;
     }
@@ -41,14 +42,14 @@ public class ChatCommands {
                     String message = (String) args.get("message");
 
                     if (target == null) {
-                        sender.sendMessage(plugin.getMessageHandler().getMessage("commands.msg.error.invalid", args.getRaw("player")));
+                        sender.sendMessage(core.getMessageHandler().getMessage("commands.msg.error.invalid", args.getRaw("player")));
                         return 1;
                     }
 
-                    Component senderMessage = plugin.getMessageHandler().getMessage("commands.msg.format.sender",
+                    Component senderMessage = core.getMessageHandler().getMessage("commands.msg.format.sender",
                                     target.getName(), message)
                             .color(NamedTextColor.GRAY);
-                    Component targetMessage = plugin.getMessageHandler().getMessage("commands.msg.format.target",
+                    Component targetMessage = core.getMessageHandler().getMessage("commands.msg.format.target",
                                     sender.getName(), message)
                             .color(NamedTextColor.GRAY);
 
@@ -58,7 +59,7 @@ public class ChatCommands {
                     return 1;
                 })
                 .withFullDescription("Sends a private message to the given player.")
-                .register(plugin);
+                .register(core);
 
         // Broadcast command
         new CommandAPICommand("broadcast")
@@ -68,12 +69,12 @@ public class ChatCommands {
                 .withPermission("rapunzelcore.broadcast")
                 .executes((executor, args) -> {
                     String message = (String) args.get("message");
-                    Component broadcastMessage = plugin.getMessageHandler().getMessage("commands.broadcast.format",
+                    Component broadcastMessage = core.getMessageHandler().getMessage("commands.broadcast.format",
                             message, executor.getName());
                     Bukkit.broadcast(broadcastMessage);
                     return 1;
                 })
-                .register(plugin);
+                .register(core);
 
         // Socialspy
         new CommandAPICommand("socialspy")
@@ -87,11 +88,11 @@ public class ChatCommands {
                     senderEntity.setSocialSpyEnabled(!enabled);
                     CoreDatabase.runLocked(() -> PlayerRepository.getInstance().save(senderEntity));
                     CoreDatabase.flushAsync();
-                    Component message = plugin.getMessageHandler().getMessage("commands.socialspy.toggle", !enabled ? "enabled" : "disabled");
+                    Component message = core.getMessageHandler().getMessage("commands.socialspy.toggle", !enabled ? "enabled" : "disabled");
                     sender.sendMessage(message);
                     return 1;
                 })
-                .register(plugin);
+                .register(core);
 
         // Root "channel" command (will hold subcommands)
         CommandAPICommand channelRoot = new CommandAPICommand("channel")
@@ -111,7 +112,7 @@ public class ChatCommands {
                     if (channelsList.length() > 0) {
                         channelsList.setLength(channelsList.length() - 2); // Remove trailing ", "
                     }
-                    Component message = plugin.getMessageHandler().getMessage("commands.channel.list", channelsList.toString());
+                    Component message = core.getMessageHandler().getMessage("commands.channel.list", channelsList.toString());
                     sender.sendMessage(message);
                     return 1;
                 });
@@ -138,17 +139,17 @@ public class ChatCommands {
                     }
                     Channel channel = channelManager.getChannel(channelArg);
                     if (channel == null) {
-                        sender.sendMessage(plugin.getMessageHandler().getMessage("commands.channel.error.notfound", channelArg));
+                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.notfound", channelArg));
                         return 1;
                     }
                     if (!channel.hasPermission(senderEntity)) {
-                        sender.sendMessage(plugin.getMessageHandler().getMessage("commands.channel.error.nopermission", channel.getName()));
+                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.nopermission", channel.getName()));
                         return 1;
                     }
                     if (channelManager.joinChannel(senderEntity, channel)) {
-                        sender.sendMessage(plugin.getMessageHandler().getMessage("commands.channel.joined", channel.getName()));
+                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.joined", channel.getName()));
                     } else {
-                        sender.sendMessage(plugin.getMessageHandler().getMessage("commands.channel.error.join", channel.getName()));
+                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.join", channel.getName()));
                     }
                     return 1;
                 });
@@ -177,13 +178,13 @@ public class ChatCommands {
                     }
                     Channel channel = channelManager.getChannel(channelArg);
                     if (channel == null) {
-                        sender.sendMessage(plugin.getMessageHandler().getMessage("commands.channel.error.notfound", channelArg));
+                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.notfound", channelArg));
                         return 1;
                     }
                     if (channelManager.leaveChannel(senderEntity, channel)) {
-                        sender.sendMessage(plugin.getMessageHandler().getMessage("commands.channel.left", channel.getName()));
+                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.left", channel.getName()));
                     } else {
-                        sender.sendMessage(plugin.getMessageHandler().getMessage("commands.channel.error.leave", channel.getName()));
+                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.leave", channel.getName()));
                     }
                     return 1;
                 });
@@ -207,18 +208,18 @@ public class ChatCommands {
                     PlayerEntity senderEntity = Utils.player(sender);
                     String channelArg = (String) args.get("channel");
                     if (channelArg == null || channelArg.isEmpty()) {
-                        sender.sendMessage(plugin.getMessageHandler().getMessage("commands.channel.error.main", ""));
+                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.main", ""));
                         return 1;
                     }
                     Channel channel = channelManager.getChannel(channelArg);
                     if (channel == null) {
-                        sender.sendMessage(plugin.getMessageHandler().getMessage("commands.channel.error.notfound", channelArg));
+                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.notfound", channelArg));
                         return 1;
                     }
                     if (channelManager.setMainChannel(senderEntity, channel)) {
-                        sender.sendMessage(plugin.getMessageHandler().getMessage("commands.channel.main", channel.getName()));
+                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.main", channel.getName()));
                     } else {
-                        sender.sendMessage(plugin.getMessageHandler().getMessage("commands.channel.error.main", channel.getName()));
+                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.main", channel.getName()));
                     }
                     return 1;
                 });
@@ -242,16 +243,16 @@ public class ChatCommands {
                     String channelArg = (String) args.get("channel");
                     String messageArg = (String) args.get("message");
                     if (channelArg == null || channelArg.isEmpty() || messageArg == null || messageArg.isEmpty()) {
-                        sender.sendMessage(plugin.getMessageHandler().getMessage("commands.channel.error.send", ""));
+                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.send", ""));
                         return 1;
                     }
                     Channel channel = channelManager.getChannel(channelArg);
                     if (channel == null) {
-                        sender.sendMessage(plugin.getMessageHandler().getMessage("commands.channel.error.notfound", channelArg));
+                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.notfound", channelArg));
                         return 1;
                     }
                     if (!channel.hasPermission(senderEntity)) {
-                        sender.sendMessage(plugin.getMessageHandler().getMessage("commands.channel.error.nopermission", channel.getName()));
+                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.nopermission", channel.getName()));
                         return 1;
                     }
                     if (!channelManager.isJoined(senderEntity, channel)) {
@@ -270,7 +271,7 @@ public class ChatCommands {
                 .withSubcommand(sendSub);
 
         // Register the root (which registers all subcommands)
-        channelRoot.register(plugin);
+        channelRoot.register(core);
     }
 
     public void unregister() {
