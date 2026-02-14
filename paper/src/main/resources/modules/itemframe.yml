@@ -3,44 +3,41 @@
 # This module provides enhanced item frame management:
 # - Toggle visibility (make frames invisible)
 # - Lock/unlock frames (prevent item removal/rotation)
+# - Toggle glowing effect
 # - Pass-through interactions to containers behind frames
 
 # Maximum distance for targeting item frames with commands
 max-distance: 5.0
 
-# Pass-through settings
+# Pass-through settings - allows interacting with containers behind item frames
 pass-through:
-  # Enable pass-through to containers behind item frames
   enabled: true
-  
-  # Require sneaking to pass through
-  require-sneak: true
-  
-  # Only pass through if frame has an item
   require-item: true
 
-# Sneak-click toggle settings
-sneak-click-toggle:
-  # Enable sneak-click toggle for invisibility
+# Invisibility settings - toggle item frame visibility
+invisibility:
   enabled: true
-  
-  # The item to use for toggling (default: shears)
-  # Use the Material name (e.g., SHEARS, STICK, BLAZE_ROD)
-  toggle-item: SHEARS
-  
-  # Require sneaking to toggle
+  tool: SHEARS
   require-sneak: true
-  
-  # Only allow players with permission to toggle
   permission: rapunzelcore.itemframe.invisible
 
-# Visual feedback settings
-visual-feedback:
-  # Show particles when locking/unlocking
-  particles: true
-  
-  # Play sounds when toggling
-  sounds: true
+# Lock settings - lock/unlock item frames to prevent modification
+lock:
+  enabled: true
+  tool: GLASS_PANE
+  require-sneak: true
+  permission: rapunzelcore.itemframe.lock
+
+# Glow settings - toggle glowing effect on item frames
+glow:
+  enabled: true
+  tool: GLOWSTONE
+  require-sneak: true
+  permission: rapunzelcore.itemframe.glow
+
+# Sound feedback for actions
+sounds:
+  enabled: true
 
 # Messages (can be customized, use MiniMessage format)
 messages:

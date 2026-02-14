@@ -31,10 +31,12 @@ commands:
     closed: "<green>Closed inventory of <gold><arg1>"
   msg:
     format:
-      sender: "<gray>[<gold><arg1><gray>] <gray><arg2>"
-      target: "<gray>[<gold><arg1><gray>] <gray><arg2>"
+      sender: "<gray>You -> <gold><arg1><gray>: <white><arg2>"
+      target: "<gold><arg1> <gray>-> You: <white><arg2>"
     error:
       invalid: "<red>Invalid player!"
+      noreply: "<red>You have no one to reply to. Send a message first!"
+      offline: "<red>The player you are trying to reply to is offline."
   nick:
     reset: "<green>Nickname of <gold><arg1> <green>reset to <gold><arg1>"
     set: "<green>Nickname of <gold><arg1> <green>set to <gold><arg2>"

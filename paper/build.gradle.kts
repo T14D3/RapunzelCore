@@ -12,7 +12,7 @@ dependencies {
     implementation(libs.rapunzellib.database.spool)
     implementation(libs.rapunzellib.nbt)
     implementation(libs.rapunzellib.nbt.paper)
- implementation(libs.rapunzellib.events)
+    implementation(libs.rapunzellib.events)
 
     paperweight.paperDevBundle(libs.versions.paper.dev.bundle.get())
 

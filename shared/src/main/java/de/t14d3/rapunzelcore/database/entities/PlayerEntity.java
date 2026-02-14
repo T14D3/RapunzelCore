@@ -70,6 +70,9 @@ public class PlayerEntity {
  @Column(name = "chat_social_spy")
  private boolean socialSpyEnabled = false;
 
+ @Column(name = "last_messaged_uuid")
+ private String lastMessagedUuid;
+
 /**
  * Default constructor required by JPA.
  */
@@ -227,7 +230,26 @@ public class PlayerEntity {
  * @param socialSpyEnabled true to enable social spy
  */
  public void setSocialSpyEnabled(boolean socialSpyEnabled) {
- this.socialSpyEnabled = socialSpyEnabled;
+   this.socialSpyEnabled = socialSpyEnabled;
+ }
+
+ /**
+  * Gets the UUID of the last player this player messaged or was messaged by.
+  *
+  * @return the last messaged player UUID as a string, or null if none
+  */
+ @Nullable
+ public String getLastMessagedUuid() {
+   return lastMessagedUuid;
+ }
+
+ /**
+  * Sets the UUID of the last player this player messaged or was messaged by.
+  *
+  * @param lastMessagedUuid the UUID string to set
+  */
+ public void setLastMessagedUuid(@Nullable String lastMessagedUuid) {
+   this.lastMessagedUuid = lastMessagedUuid;
  }
 
 /**

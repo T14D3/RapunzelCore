@@ -4,9 +4,9 @@ import de.t14d3.rapunzelcore.Module;
 import de.t14d3.rapunzelcore.RapunzelCore;
 import de.t14d3.rapunzelcore.Environment;
 import de.t14d3.rapunzelcore.RapunzelPaperCore;
+import de.t14d3.rapunzellib.config.YamlConfig;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -21,31 +21,44 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 
 import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Module for item frame management including:
  * - Invisibility toggle
  * - Lock/unlock items and rotation
+ * - Glow toggle
  * - Pass-through interactions to containers
  */
 public class ItemFrameModule implements Module, Listener {
 
     private RapunzelPaperCore plugin;
     private boolean enabled = false;
-
-    // Track locked frames: entity UUID -> true
-    private final Set<UUID> lockedFrames = ConcurrentHashMap.newKeySet();
-    
-    // Track invisible frames: entity UUID -> true
-    private final Set<UUID> invisibleFrames = ConcurrentHashMap.newKeySet();
-    
-    // Track frames with items: entity UUID -> true (for pass-through logic)
-    private final Set<UUID> framesWithItems = ConcurrentHashMap.newKeySet();
     
     private ItemFrameCommand command;
+    private YamlConfig config;
+    
+    // Cached configuration values - general
+    private boolean soundsEnabled;
+    private boolean passThroughEnabled;
+    private double maxDistance;
+    
+    // Cached configuration values - invisibility
+    private boolean invisibilityEnabled;
+    private boolean invisibilityRequireSneak;
+    private Material invisibilityTool;
+    private String invisibilityPermission;
+    
+    // Cached configuration values - lock
+    private boolean lockEnabled;
+    private boolean lockRequireSneak;
+    private Material lockTool;
+    private String lockPermission;
+    
+    // Cached configuration values - glow
+    private boolean glowEnabled;
+    private boolean glowRequireSneak;
+    private Material glowTool;
+    private String glowPermission;
 
     public Environment getEnvironment() {
         return Environment.PAPER;
@@ -60,7 +73,8 @@ public class ItemFrameModule implements Module, Listener {
                 Map.entry("rapunzelcore.itemframe", "op"),
                 Map.entry("rapunzelcore.itemframe.invisible", "op"),
                 Map.entry("rapunzelcore.itemframe.lock", "op"),
-                Map.entry("rapunzelcore.itemframe.unlock", "op")
+                Map.entry("rapunzelcore.itemframe.unlock", "op"),
+                Map.entry("rapunzelcore.itemframe.glow", "op")
         );
     }
 
@@ -70,12 +84,57 @@ public class ItemFrameModule implements Module, Listener {
 
         if (getEnvironment() != Environment.PAPER) return;
 
+        // Load and cache configuration values
+        this.config = loadConfig();
+        loadConfiguration();
+
         // Register event listener
         Bukkit.getPluginManager().registerEvents(this, plugin);
 
         // Register commands
         this.command = new ItemFrameCommand(plugin, this);
 
+    }
+
+    /**
+     * Loads and caches configuration values.
+     */
+    private void loadConfiguration() {
+        // General settings
+        this.soundsEnabled = config.getBoolean("sounds.enabled", true);
+        this.passThroughEnabled = config.getBoolean("pass-through.enabled", true);
+        this.maxDistance = config.getDouble("max-distance", 5.0);
+        
+        // Invisibility settings
+        this.invisibilityEnabled = config.getBoolean("invisibility.enabled", true);
+        this.invisibilityRequireSneak = config.getBoolean("invisibility.require-sneak", true);
+        this.invisibilityPermission = config.getString("invisibility.permission", "rapunzelcore.itemframe.invisible");
+        this.invisibilityTool = parseMaterial("invisibility.tool", "SHEARS");
+        
+        // Lock settings
+        this.lockEnabled = config.getBoolean("lock.enabled", true);
+        this.lockRequireSneak = config.getBoolean("lock.require-sneak", true);
+        this.lockPermission = config.getString("lock.permission", "rapunzelcore.itemframe.lock");
+        this.lockTool = parseMaterial("lock.tool", "GLASS_PANE");
+        
+        // Glow settings
+        this.glowEnabled = config.getBoolean("glow.enabled", true);
+        this.glowRequireSneak = config.getBoolean("glow.require-sneak", true);
+        this.glowPermission = config.getString("glow.permission", "rapunzelcore.itemframe.glow");
+        this.glowTool = parseMaterial("glow.tool", "GLOWSTONE");
+    }
+    
+    /**
+     * Parses a material from configuration with error handling.
+     */
+    private Material parseMaterial(String configPath, String defaultMaterial) {
+        String materialName = config.getString(configPath, defaultMaterial);
+        try {
+            return Material.valueOf(materialName.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            plugin.getLogger().warning("Invalid " + configPath + " in configuration: " + materialName + ", defaulting to " + defaultMaterial);
+            return Material.valueOf(defaultMaterial);
+        }
     }
 
 
@@ -95,9 +154,6 @@ public class ItemFrameModule implements Module, Listener {
                 command.unregister();
                 command = null;
             }
-            lockedFrames.clear();
-            invisibleFrames.clear();
-            framesWithItems.clear();
         }
     }
 
@@ -112,75 +168,64 @@ public class ItemFrameModule implements Module, Listener {
         }
 
         Player player = event.getPlayer();
-        UUID frameUuid = frame.getUniqueId();
+        Material heldItem = player.getInventory().getItemInMainHand().getType();
 
-        // Handle sneak-click toggle for invisibility
-        if (plugin.getConfiguration().getBoolean("sneak-click-toggle.enabled", true)) {
-            boolean requireSneak = plugin.getConfiguration().getBoolean("sneak-click-toggle.require-sneak", true);
-            String toggleItemName = plugin.getConfiguration().getString("sneak-click-toggle.toggle-item", "SHEARS");
-            String permission = plugin.getConfiguration().getString("sneak-click-toggle.permission", "rapunzelcore.itemframe.invisible");
-
-            try {
-                Material toggleItem = Material.valueOf(toggleItemName.toUpperCase());
-
-                if (player.hasPermission(permission) &&
-                    (!requireSneak || player.isSneaking()) &&
-                    player.getInventory().getItemInMainHand().getType() == toggleItem) {
-
-                    event.setCancelled(true);
-                    boolean nowInvisible = toggleInvisible(frame);
-
-                    // Send feedback message
-                    if (nowInvisible) {
-                        player.sendMessage(plugin.getMessageHandler().getMessage("itemframe.invisible.enabled"));
-                    } else {
-                        player.sendMessage(plugin.getMessageHandler().getMessage("itemframe.invisible.disabled"));
-                    }
-
-                    // Play sound if enabled
-                    if (plugin.getConfiguration().getBoolean("visual-feedback.sounds", true)) {
-                        Sound sound = nowInvisible ? Sound.BLOCK_AMETHYST_BLOCK_CHIME : Sound.BLOCK_AMETHYST_BLOCK_BREAK;
-                        player.playSound(frame.getLocation(), sound, 0.5f, 1.0f);
-                    }
-
-                    // Show particles if enabled
-                    if (plugin.getConfiguration().getBoolean("visual-feedback.particles", true)) {
-                        Particle particle = nowInvisible ? Particle.END_ROD : Particle.CRIT;
-                        frame.getWorld().spawnParticle(particle, frame.getLocation().add(0.5, 0.5, 0.5), 10, 0.2, 0.2, 0.2, 0.01);
-                    }
-
-                    return;
-                }
-            } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("Invalid toggle-item in configuration: " + toggleItemName);
+        // Handle invisibility toggle
+        if (invisibilityEnabled && heldItem == invisibilityTool) {
+            if (player.hasPermission(invisibilityPermission) &&
+                (!invisibilityRequireSneak || player.isSneaking())) {
+                
+                event.setCancelled(true);
+                boolean nowInvisible = toggleInvisible(frame);
+                sendFeedback(player, nowInvisible ? "itemframe.invisible.enabled" : "itemframe.invisible.disabled");
+                playSound(player, frame, nowInvisible);
+                return;
             }
         }
 
-        // Handle pass-through: if sneaking and frame has item, open container behind
-        if (player.isSneaking() && frame.getItem().getType() != Material.AIR) {
-            if (plugin.getConfiguration().getBoolean("pass-through.enabled", true)) {
+        // Handle lock/unlock toggle
+        if (lockEnabled && heldItem == lockTool) {
+            if (player.hasPermission(lockPermission) &&
+                (!lockRequireSneak || player.isSneaking())) {
+                
+                event.setCancelled(true);
+                boolean nowLocked = toggleLock(frame);
+                sendFeedback(player, nowLocked ? "itemframe.lock.enabled" : "itemframe.lock.disabled");
+                playSound(player, frame, nowLocked);
+                return;
+            }
+        }
+
+        // Handle glow toggle
+        if (glowEnabled && heldItem == glowTool) {
+            if (player.hasPermission(glowPermission) &&
+                (!glowRequireSneak || player.isSneaking())) {
+                
+                event.setCancelled(true);
+                boolean nowGlowing = toggleGlow(frame);
+                sendFeedback(player, nowGlowing ? "itemframe.glow.enabled" : "itemframe.glow.disabled");
+                playSound(player, frame, nowGlowing);
+                return;
+            }
+        }
+
+        // Handle pass-through: if NOT sneaking and frame has item, open container behind
+        if (!player.isSneaking() && frame.getItem().getType() != Material.AIR) {
+            if (passThroughEnabled) {
                 Block behind = getBlockBehind(frame);
                 if (behind != null && behind.getState() instanceof Container) {
                     event.setCancelled(true);
-                    // Open the container
                     player.openInventory(((Container) behind.getState()).getInventory());
                     return;
                 }
             }
         }
 
-        // Check if frame is locked
-        if (lockedFrames.contains(frameUuid)) {
+        // Check if frame is locked (using fixed property)
+        if (frame.isFixed()) {
             event.setCancelled(true);
             player.sendMessage(plugin.getMessageHandler().getMessage("itemframe.error.locked"));
             return;
-        }
-
-        // Update tracking
-        if (frame.getItem().getType() != Material.AIR) {
-            framesWithItems.add(frameUuid);
-        } else {
-            framesWithItems.remove(frameUuid);
         }
     }
 
@@ -190,13 +235,30 @@ public class ItemFrameModule implements Module, Listener {
             return;
         }
 
-        // Check if frame is locked
-        if (lockedFrames.contains(frame.getUniqueId())) {
+        // Check if frame is locked (using fixed property)
+        if (frame.isFixed()) {
             if (event.getDamager() instanceof Player player) {
                 player.sendMessage(plugin.getMessageHandler().getMessage("itemframe.error.locked"));
             }
             event.setCancelled(true);
             return;
+        }
+    }
+
+    /**
+     * Sends feedback message to player.
+     */
+    private void sendFeedback(Player player, String messageKey) {
+        player.sendMessage(plugin.getMessageHandler().getMessage(messageKey));
+    }
+
+    /**
+     * Plays sound feedback for actions.
+     */
+    private void playSound(Player player, ItemFrame frame, boolean enabled) {
+        if (soundsEnabled) {
+            Sound sound = enabled ? Sound.BLOCK_AMETHYST_BLOCK_CHIME : Sound.BLOCK_AMETHYST_BLOCK_BREAK;
+            player.playSound(frame.getLocation(), sound, 0.5f, 1.0f);
         }
     }
 
@@ -207,8 +269,7 @@ public class ItemFrameModule implements Module, Listener {
      */
     private Block getBlockBehind(ItemFrame frame) {
         Location frameLoc = frame.getLocation();
-        Block attached = frame.getAttachedFace() != null ? frameLoc.getBlock().getRelative(frame.getAttachedFace()) : null;
-        return attached;
+        return frameLoc.getBlock().getRelative(frame.getAttachedFace());
     }
 
     /**
@@ -217,18 +278,31 @@ public class ItemFrameModule implements Module, Listener {
      * @return true if now invisible, false if now visible
      */
     public boolean toggleInvisible(ItemFrame frame) {
-        UUID uuid = frame.getUniqueId();
-        boolean isInvisible = invisibleFrames.contains(uuid);
-        
-        if (isInvisible) {
-            invisibleFrames.remove(uuid);
-            frame.setVisible(true);
-            return false;
-        } else {
-            invisibleFrames.add(uuid);
-            frame.setVisible(false);
-            return true;
-        }
+        boolean isInvisible = !frame.isVisible();
+        frame.setVisible(isInvisible);
+        return isInvisible;
+    }
+
+    /**
+     * Toggles lock state of an item frame.
+     * @param frame the item frame
+     * @return true if now locked, false if now unlocked
+     */
+    public boolean toggleLock(ItemFrame frame) {
+        boolean isLocked = !frame.isFixed();
+        frame.setFixed(isLocked);
+        return isLocked;
+    }
+
+    /**
+     * Toggles glow effect of an item frame.
+     * @param frame the item frame
+     * @return true if now glowing, false if no longer glowing
+     */
+    public boolean toggleGlow(ItemFrame frame) {
+        boolean isGlowing = !frame.isGlowing();
+        frame.setGlowing(isGlowing);
+        return isGlowing;
     }
 
     /**
@@ -236,11 +310,7 @@ public class ItemFrameModule implements Module, Listener {
      * @param frame the item frame
      */
     public void lock(ItemFrame frame) {
-        lockedFrames.add(frame.getUniqueId());
         frame.setFixed(true);
-        if (frame.getItem().getType() != Material.AIR) {
-            framesWithItems.add(frame.getUniqueId());
-        }
     }
 
     /**
@@ -248,7 +318,6 @@ public class ItemFrameModule implements Module, Listener {
      * @param frame the item frame
      */
     public void unlock(ItemFrame frame) {
-        lockedFrames.remove(frame.getUniqueId());
         frame.setFixed(false);
     }
 
@@ -258,7 +327,7 @@ public class ItemFrameModule implements Module, Listener {
      * @return true if locked
      */
     public boolean isLocked(ItemFrame frame) {
-        return lockedFrames.contains(frame.getUniqueId());
+        return frame.isFixed();
     }
 
     /**
@@ -267,7 +336,16 @@ public class ItemFrameModule implements Module, Listener {
      * @return true if invisible
      */
     public boolean isInvisible(ItemFrame frame) {
-        return invisibleFrames.contains(frame.getUniqueId());
+        return !frame.isVisible();
+    }
+
+    /**
+     * Checks if an item frame is glowing.
+     * @param frame the item frame
+     * @return true if glowing
+     */
+    public boolean isGlowing(ItemFrame frame) {
+        return frame.isGlowing();
     }
 
     /**
@@ -276,7 +354,6 @@ public class ItemFrameModule implements Module, Listener {
      * @return the item frame, or null
      */
     public ItemFrame getTargetFrame(Player player) {
-        double maxDistance = plugin.getConfiguration().getDouble("max-distance", 5.0);
         Entity target = player.getTargetEntity((int) maxDistance);
         
         if (target instanceof ItemFrame frame) {
@@ -286,7 +363,6 @@ public class ItemFrameModule implements Module, Listener {
         // Fallback: check nearby entities
         for (Entity entity : player.getNearbyEntities(maxDistance, maxDistance, maxDistance)) {
             if (entity instanceof ItemFrame frame) {
-                // Check if player is looking at this frame
                 if (isPlayerLookingAt(player, frame)) {
                     return frame;
                 }
@@ -303,13 +379,11 @@ public class ItemFrameModule implements Module, Listener {
         Location eyeLoc = player.getEyeLocation();
         Location frameLoc = frame.getLocation();
         
-        // Simple distance check
         double distance = eyeLoc.distance(frameLoc);
-        if (distance > plugin.getConfiguration().getDouble("max-distance", 5.0)) {
+        if (distance > maxDistance) {
             return false;
         }
         
-        // Check if in line of sight
         return player.hasLineOfSight(frame);
     }
 
@@ -326,14 +400,14 @@ public class ItemFrameModule implements Module, Listener {
      * @return true if pass-through is enabled
      */
     public boolean isPassThroughEnabled() {
-        return plugin.getConfiguration().getBoolean("pass-through.enabled", true);
+        return passThroughEnabled;
     }
 
     /**
-     * Gets the required sneak state for pass-through.
+     * Gets the required sneak state for invisibility toggle.
      * @return true if sneaking is required
      */
     public boolean isSneakRequired() {
-        return plugin.getConfiguration().getBoolean("pass-through.require-sneak", true);
+        return invisibilityRequireSneak;
     }
 }

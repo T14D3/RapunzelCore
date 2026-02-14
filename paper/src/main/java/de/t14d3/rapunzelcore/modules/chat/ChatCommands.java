@@ -7,6 +7,7 @@ import de.t14d3.rapunzelcore.database.entities.Channel;
 import de.t14d3.rapunzelcore.database.entities.PlayerEntity;
 import de.t14d3.rapunzelcore.database.entities.PlayerRepository;
 import de.t14d3.rapunzelcore.util.Utils;
+import de.t14d3.rapunzellib.Rapunzel;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.EntitySelectorArgument;
 import dev.jorel.commandapi.arguments.GreedyStringArgument;
@@ -15,6 +16,9 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+
+import java.time.Duration;
+import java.util.UUID;
 
 public class ChatCommands {
     private final RapunzelPaperCore core;
@@ -46,229 +50,252 @@ public class ChatCommands {
                         return 1;
                     }
 
-                    Component senderMessage = core.getMessageHandler().getMessage("commands.msg.format.sender",
-                                    target.getName(), message)
-                            .color(NamedTextColor.GRAY);
-                    Component targetMessage = core.getMessageHandler().getMessage("commands.msg.format.target",
-                                    sender.getName(), message)
-                            .color(NamedTextColor.GRAY);
+                    Component senderMessage = core.getMessageHandler().getMessage("commands.msg.format.sender", target.getName(), message).color(NamedTextColor.GRAY);
+                    Component targetMessage = core.getMessageHandler().getMessage("commands.msg.format.target", sender.getName(), message).color(NamedTextColor.GRAY);
 
                     sender.sendMessage(senderMessage);
                     target.sendMessage(targetMessage);
 
+                    // Capture UUIDs for async processing
+                    UUID senderUuid = sender.getUniqueId();
+                    UUID targetUuid = target.getUniqueId();
+
+                    // Asynchronously update last messaged tracking to avoid blocking main thread
+                    Rapunzel.context().scheduler().runAsync(() -> {
+                        PlayerEntity senderEntity = PlayerRepository.getPlayer(senderUuid);
+                        if (senderEntity != null) {
+                            senderEntity.setLastMessagedUuid(targetUuid.toString());
+                            CoreDatabase.runLockedAsync(() -> PlayerRepository.getInstance().save(senderEntity));
+                        }
+                        PlayerEntity targetEntity = PlayerRepository.getPlayer(targetUuid);
+                        if (targetEntity != null) {
+                            targetEntity.setLastMessagedUuid(senderUuid.toString());
+                            CoreDatabase.runLockedAsync(() -> PlayerRepository.getInstance().save(targetEntity));
+                        }
+                        CoreDatabase.flushAsync();
+                    });
+
                     return 1;
-                })
-                .withFullDescription("Sends a private message to the given player.")
-                .register(core);
+                }).withFullDescription("Sends a private message to the given player.").register(core);
+
+        // Reply command (/r)
+        new CommandAPICommand("r").withAliases("reply").withArguments(new GreedyStringArgument("message")).withPermission("rapunzelcore.msg").executes((executor, args) -> {
+            if (!(executor instanceof Player sender)) return 1;
+            String message = (String) args.get("message");
+
+            if (message == null || message.isBlank()) {
+                sender.sendMessage(Component.text("Usage: /r <message>").color(NamedTextColor.RED));
+                return 1;
+            }
+
+            UUID senderUuid = sender.getUniqueId();
+
+            // Asynchronously fetch sender's last messaged player and send reply
+            Rapunzel.context().scheduler().runAsync(() -> {
+                PlayerEntity senderEntity = PlayerRepository.getPlayer(senderUuid);
+                if (senderEntity == null) {
+                    Rapunzel.context().scheduler().runLater(Duration.ZERO, () ->
+                        sender.sendMessage(Component.text("Error: Could not retrieve player data.").color(NamedTextColor.RED)));
+                    return;
+                }
+
+                String lastMessagedUuid = senderEntity.getLastMessagedUuid();
+                if (lastMessagedUuid == null || lastMessagedUuid.isBlank()) {
+                    Rapunzel.context().scheduler().runLater(Duration.ZERO, () ->
+                        sender.sendMessage(core.getMessageHandler().getMessage("commands.msg.error.noreply")));
+                    return;
+                }
+
+                UUID targetUuid = UUID.fromString(lastMessagedUuid);
+                org.bukkit.entity.Player target = Bukkit.getPlayer(targetUuid);
+                if (target == null || !target.isOnline()) {
+                    Rapunzel.context().scheduler().runLater(Duration.ZERO, () ->
+                        sender.sendMessage(core.getMessageHandler().getMessage("commands.msg.error.offline")));
+                    return;
+                }
+
+                // Send messages on main thread
+                Rapunzel.context().scheduler().runLater(Duration.ZERO, () -> {
+                    Component senderMessage = core.getMessageHandler().getMessage("commands.msg.format.sender", target.getName(), message).color(NamedTextColor.GRAY);
+                    Component targetMessage = core.getMessageHandler().getMessage("commands.msg.format.target", sender.getName(), message).color(NamedTextColor.GRAY);
+                    sender.sendMessage(senderMessage);
+                    target.sendMessage(targetMessage);
+                });
+
+                // Update target's tracking asynchronously
+                PlayerEntity targetEntity = PlayerRepository.getPlayer(targetUuid);
+                if (targetEntity != null) {
+                    targetEntity.setLastMessagedUuid(senderUuid.toString());
+                    CoreDatabase.runLockedAsync(() -> PlayerRepository.getInstance().save(targetEntity));
+                    CoreDatabase.flushAsync();
+                }
+            });
+
+            return 1;
+        }).withFullDescription("Replies to the last player who messaged you.").register(core);
 
         // Broadcast command
-        new CommandAPICommand("broadcast")
-                .withAliases("bc")
-                .withArguments(new GreedyStringArgument("message"))
-                .withFullDescription("Broadcasts a message to all online players.")
-                .withPermission("rapunzelcore.broadcast")
-                .executes((executor, args) -> {
-                    String message = (String) args.get("message");
-                    Component broadcastMessage = core.getMessageHandler().getMessage("commands.broadcast.format",
-                            message, executor.getName());
-                    Bukkit.broadcast(broadcastMessage);
-                    return 1;
-                })
-                .register(core);
+        new CommandAPICommand("broadcast").withAliases("bc").withArguments(new GreedyStringArgument("message")).withFullDescription("Broadcasts a message to all online players.").withPermission("rapunzelcore.broadcast").executes((executor, args) -> {
+            String message = (String) args.get("message");
+            Component broadcastMessage = core.getMessageHandler().getMessage("commands.broadcast.format", message, executor.getName());
+            Bukkit.broadcast(broadcastMessage);
+            return 1;
+        }).register(core);
 
         // Socialspy
-        new CommandAPICommand("socialspy")
-                .withAliases("spy")
-                .withFullDescription("Toggles social spy mode for the given player.")
-                .withPermission("rapunzelcore.socialspy")
-                .executes((executor, args) -> {
-                    if (!(executor instanceof Player sender)) return 1;
-                    PlayerEntity senderEntity = Utils.player(sender);
-                    boolean enabled = senderEntity.isSocialSpyEnabled();
-                    senderEntity.setSocialSpyEnabled(!enabled);
-                    CoreDatabase.runLocked(() -> PlayerRepository.getInstance().save(senderEntity));
-                    CoreDatabase.flushAsync();
-                    Component message = core.getMessageHandler().getMessage("commands.socialspy.toggle", !enabled ? "enabled" : "disabled");
-                    sender.sendMessage(message);
-                    return 1;
-                })
-                .register(core);
+        new CommandAPICommand("socialspy").withAliases("spy").withFullDescription("Toggles social spy mode for the given player.").withPermission("rapunzelcore.socialspy").executes((executor, args) -> {
+            if (!(executor instanceof Player sender)) return 1;
+            PlayerEntity senderEntity = Utils.player(sender);
+            boolean enabled = senderEntity.isSocialSpyEnabled();
+            senderEntity.setSocialSpyEnabled(!enabled);
+            CoreDatabase.runLocked(() -> PlayerRepository.getInstance().save(senderEntity));
+            CoreDatabase.flushAsync();
+            Component message = core.getMessageHandler().getMessage("commands.socialspy.toggle", !enabled ? "enabled" : "disabled");
+            sender.sendMessage(message);
+            return 1;
+        }).register(core);
 
         // Root "channel" command (will hold subcommands)
-        CommandAPICommand channelRoot = new CommandAPICommand("channel")
-                .withAliases("ch")
-                .withPermission("rapunzelcore.channel")
-                .withFullDescription("Manages chat channels.");
+        CommandAPICommand channelRoot = new CommandAPICommand("channel").withAliases("ch").withPermission("rapunzelcore.channel").withFullDescription("Manages chat channels.");
 
         // /channel list
-        CommandAPICommand listSub = new CommandAPICommand("list")
-                .executes((executor, args) -> {
-                    if (!(executor instanceof Player sender)) return 1;
-                    PlayerEntity senderEntity = Utils.player(sender);
-                    StringBuilder channelsList = new StringBuilder();
-                    for (Channel channel : channelManager.getAllowedChannels(senderEntity).values()) {
-                        channelsList.append(channel.getName()).append(", ");
-                    }
-                    if (channelsList.length() > 0) {
-                        channelsList.setLength(channelsList.length() - 2); // Remove trailing ", "
-                    }
-                    Component message = core.getMessageHandler().getMessage("commands.channel.list", channelsList.toString());
-                    sender.sendMessage(message);
-                    return 1;
-                });
+        CommandAPICommand listSub = new CommandAPICommand("list").executes((executor, args) -> {
+            if (!(executor instanceof Player sender)) return 1;
+            PlayerEntity senderEntity = Utils.player(sender);
+            StringBuilder channelsList = new StringBuilder();
+            for (Channel channel : channelManager.getAllowedChannels(senderEntity).values()) {
+                channelsList.append(channel.getName()).append(", ");
+            }
+            if (channelsList.length() > 0) {
+                channelsList.setLength(channelsList.length() - 2); // Remove trailing ", "
+            }
+            Component message = core.getMessageHandler().getMessage("commands.channel.list", channelsList.toString());
+            sender.sendMessage(message);
+            return 1;
+        });
 
         // /channel join <channel>
-        CommandAPICommand joinSub = new CommandAPICommand("join")
-                .withArguments(
-                        new StringArgument("channel")
-                                .replaceSuggestions((info, builder) -> {
-                                    if (info.sender() instanceof Player sender) {
-                                        PlayerEntity senderEntity = Utils.player(sender);
-                                        channelManager.getAllowedChannels(senderEntity).forEach((name, channel) -> builder.suggest(name));
-                                    }
-                                    return builder.buildFuture();
-                                })
-                )
-                .executes((executor, args) -> {
-                    if (!(executor instanceof Player sender)) return 1;
-                    PlayerEntity senderEntity = Utils.player(sender);
-                    String channelArg = (String) args.get("channel");
-                    if (channelArg == null || channelArg.isEmpty()) {
-                        sender.sendMessage(Component.text("Usage: /channel join <name>").color(NamedTextColor.RED));
-                        return 1;
-                    }
-                    Channel channel = channelManager.getChannel(channelArg);
-                    if (channel == null) {
-                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.notfound", channelArg));
-                        return 1;
-                    }
-                    if (!channel.hasPermission(senderEntity)) {
-                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.nopermission", channel.getName()));
-                        return 1;
-                    }
-                    if (channelManager.joinChannel(senderEntity, channel)) {
-                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.joined", channel.getName()));
-                    } else {
-                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.join", channel.getName()));
-                    }
-                    return 1;
-                });
+        CommandAPICommand joinSub = new CommandAPICommand("join").withArguments(new StringArgument("channel").replaceSuggestions((info, builder) -> {
+            if (info.sender() instanceof Player sender) {
+                PlayerEntity senderEntity = Utils.player(sender);
+                channelManager.getAllowedChannels(senderEntity).forEach((name, channel) -> builder.suggest(name));
+            }
+            return builder.buildFuture();
+        })).executes((executor, args) -> {
+            if (!(executor instanceof Player sender)) return 1;
+            PlayerEntity senderEntity = Utils.player(sender);
+            String channelArg = (String) args.get("channel");
+            if (channelArg == null || channelArg.isEmpty()) {
+                sender.sendMessage(Component.text("Usage: /channel join <name>").color(NamedTextColor.RED));
+                return 1;
+            }
+            Channel channel = channelManager.getChannel(channelArg);
+            if (channel == null) {
+                sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.notfound", channelArg));
+                return 1;
+            }
+            if (!channel.hasPermission(senderEntity)) {
+                sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.nopermission", channel.getName()));
+                return 1;
+            }
+            if (channelManager.joinChannel(senderEntity, channel)) {
+                sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.joined", channel.getName()));
+            } else {
+                sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.join", channel.getName()));
+            }
+            return 1;
+        });
 
         // /channel leave <channel>
-        CommandAPICommand leaveSub = new CommandAPICommand("leave")
-                .withArguments(
-                        new StringArgument("channel")
-                                .replaceSuggestions((info, builder) -> {
-                                    if (info.sender() instanceof Player sender) {
-                                        PlayerEntity senderEntity = Utils.player(sender);
-                                        channelManager.getJoinedChannels(senderEntity).stream()
-                                            .map(Channel::getName)
-                                            .forEach(builder::suggest);
-                                    }
-                                    return builder.buildFuture();
-                                })
-                )
-                .executes((executor, args) -> {
-                    if (!(executor instanceof Player sender)) return 1;
-                    PlayerEntity senderEntity = Utils.player(sender);
-                    String channelArg = (String) args.get("channel");
-                    if (channelArg == null || channelArg.isEmpty()) {
-                        sender.sendMessage(Component.text("Usage: /channel leave <name>").color(NamedTextColor.RED));
-                        return 1;
-                    }
-                    Channel channel = channelManager.getChannel(channelArg);
-                    if (channel == null) {
-                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.notfound", channelArg));
-                        return 1;
-                    }
-                    if (channelManager.leaveChannel(senderEntity, channel)) {
-                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.left", channel.getName()));
-                    } else {
-                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.leave", channel.getName()));
-                    }
-                    return 1;
-                });
+        CommandAPICommand leaveSub = new CommandAPICommand("leave").withArguments(new StringArgument("channel").replaceSuggestions((info, builder) -> {
+            if (info.sender() instanceof Player sender) {
+                PlayerEntity senderEntity = Utils.player(sender);
+                channelManager.getJoinedChannels(senderEntity).stream().map(Channel::getName).forEach(builder::suggest);
+            }
+            return builder.buildFuture();
+        })).executes((executor, args) -> {
+            if (!(executor instanceof Player sender)) return 1;
+            PlayerEntity senderEntity = Utils.player(sender);
+            String channelArg = (String) args.get("channel");
+            if (channelArg == null || channelArg.isEmpty()) {
+                sender.sendMessage(Component.text("Usage: /channel leave <name>").color(NamedTextColor.RED));
+                return 1;
+            }
+            Channel channel = channelManager.getChannel(channelArg);
+            if (channel == null) {
+                sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.notfound", channelArg));
+                return 1;
+            }
+            if (channelManager.leaveChannel(senderEntity, channel)) {
+                sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.left", channel.getName()));
+            } else {
+                sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.leave", channel.getName()));
+            }
+            return 1;
+        });
 
         // /channel main <channel>
-        CommandAPICommand mainSub = new CommandAPICommand("main")
-                .withArguments(
-                        new StringArgument("channel")
-                                .replaceSuggestions((info, builder) -> {
-                                    if (info.sender() instanceof Player sender) {
-                                        PlayerEntity senderEntity = Utils.player(sender);
-                                        channelManager.getJoinedChannels(senderEntity).stream()
-                                            .map(Channel::getName)
-                                            .forEach(builder::suggest);
-                                    }
-                                    return builder.buildFuture();
-                                })
-                )
-                .executes((executor, args) -> {
-                    if (!(executor instanceof Player sender)) return 1;
-                    PlayerEntity senderEntity = Utils.player(sender);
-                    String channelArg = (String) args.get("channel");
-                    if (channelArg == null || channelArg.isEmpty()) {
-                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.main", ""));
-                        return 1;
-                    }
-                    Channel channel = channelManager.getChannel(channelArg);
-                    if (channel == null) {
-                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.notfound", channelArg));
-                        return 1;
-                    }
-                    if (channelManager.setMainChannel(senderEntity, channel)) {
-                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.main", channel.getName()));
-                    } else {
-                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.main", channel.getName()));
-                    }
-                    return 1;
-                });
+        CommandAPICommand mainSub = new CommandAPICommand("main").withArguments(new StringArgument("channel").replaceSuggestions((info, builder) -> {
+            if (info.sender() instanceof Player sender) {
+                PlayerEntity senderEntity = Utils.player(sender);
+                channelManager.getJoinedChannels(senderEntity).stream().map(Channel::getName).forEach(builder::suggest);
+            }
+            return builder.buildFuture();
+        })).executes((executor, args) -> {
+            if (!(executor instanceof Player sender)) return 1;
+            PlayerEntity senderEntity = Utils.player(sender);
+            String channelArg = (String) args.get("channel");
+            if (channelArg == null || channelArg.isEmpty()) {
+                sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.main", ""));
+                return 1;
+            }
+            Channel channel = channelManager.getChannel(channelArg);
+            if (channel == null) {
+                sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.notfound", channelArg));
+                return 1;
+            }
+            if (channelManager.setMainChannel(senderEntity, channel)) {
+                sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.main", channel.getName()));
+            } else {
+                sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.main", channel.getName()));
+            }
+            return 1;
+        });
 
         // /channel send <channel> <message...>
-        CommandAPICommand sendSub = new CommandAPICommand("send")
-                .withArguments(
-                        new StringArgument("channel")
-                                .replaceSuggestions((info, builder) -> {
-                                    if (info.sender() instanceof Player sender) {
-                                        PlayerEntity senderEntity = Utils.player(sender);
-                                        channelManager.getAllowedChannels(senderEntity).keySet().forEach(builder::suggest);
-                                    }
-                                    return builder.buildFuture();
-                                }),
-                        new GreedyStringArgument("message")
-                )
-                .executes((executor, args) -> {
-                    if (!(executor instanceof Player sender)) return 1;
-                    PlayerEntity senderEntity = Utils.player(sender);
-                    String channelArg = (String) args.get("channel");
-                    String messageArg = (String) args.get("message");
-                    if (channelArg == null || channelArg.isEmpty() || messageArg == null || messageArg.isEmpty()) {
-                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.send", ""));
-                        return 1;
-                    }
-                    Channel channel = channelManager.getChannel(channelArg);
-                    if (channel == null) {
-                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.notfound", channelArg));
-                        return 1;
-                    }
-                    if (!channel.hasPermission(senderEntity)) {
-                        sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.nopermission", channel.getName()));
-                        return 1;
-                    }
-                    if (!channelManager.isJoined(senderEntity, channel)) {
-                        channelManager.joinChannel(senderEntity, channel);
-                    }
-                    broadcaster.broadcastOutgoing(sender, channel, Component.text(messageArg));
-                    return 1;
-                });
+        CommandAPICommand sendSub = new CommandAPICommand("send").withArguments(new StringArgument("channel").replaceSuggestions((info, builder) -> {
+            if (info.sender() instanceof Player sender) {
+                PlayerEntity senderEntity = Utils.player(sender);
+                channelManager.getAllowedChannels(senderEntity).keySet().forEach(builder::suggest);
+            }
+            return builder.buildFuture();
+        }), new GreedyStringArgument("message")).executes((executor, args) -> {
+            if (!(executor instanceof Player sender)) return 1;
+            PlayerEntity senderEntity = Utils.player(sender);
+            String channelArg = (String) args.get("channel");
+            String messageArg = (String) args.get("message");
+            if (channelArg == null || channelArg.isEmpty() || messageArg == null || messageArg.isEmpty()) {
+                sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.send", ""));
+                return 1;
+            }
+            Channel channel = channelManager.getChannel(channelArg);
+            if (channel == null) {
+                sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.notfound", channelArg));
+                return 1;
+            }
+            if (!channel.hasPermission(senderEntity)) {
+                sender.sendMessage(core.getMessageHandler().getMessage("commands.channel.error.nopermission", channel.getName()));
+                return 1;
+            }
+            if (!channelManager.isJoined(senderEntity, channel)) {
+                channelManager.joinChannel(senderEntity, channel);
+            }
+            broadcaster.broadcastOutgoing(sender, channel, Component.text(messageArg));
+            return 1;
+        });
 
         // Add subcommands to root
-        channelRoot
-                .withSubcommand(listSub)
-                .withSubcommand(joinSub)
-                .withSubcommand(leaveSub)
-                .withSubcommand(mainSub)
-                .withSubcommand(sendSub);
+        channelRoot.withSubcommand(listSub).withSubcommand(joinSub).withSubcommand(leaveSub).withSubcommand(mainSub).withSubcommand(sendSub);
 
         // Register the root (which registers all subcommands)
         channelRoot.register(core);
@@ -280,5 +307,7 @@ public class ChatCommands {
         dev.jorel.commandapi.CommandAPI.unregister("broadcast");
         dev.jorel.commandapi.CommandAPI.unregister("socialspy");
         dev.jorel.commandapi.CommandAPI.unregister("channel");
+        dev.jorel.commandapi.CommandAPI.unregister("r");
+        dev.jorel.commandapi.CommandAPI.unregister("reply");
     }
 }

@@ -1,17 +1,17 @@
 # Module configuration
 # Set to false to disable specific modules
 modules:
-  script: true
-  joinleave: true
-  interaction: true
-  shulker: true
+  script: false
+  joinleave: false
+  interaction: false
+  shulker: false
   warps: false
   homes: false
-  teamchat: true
-  commands: true
-  inventories: true
-  teleports: true
-  chat: true
+  teamchat: false
+  commands: false
+  inventories: false
+  teleports: false
+  chat: false
 
 # Network / messaging configuration
 network:
